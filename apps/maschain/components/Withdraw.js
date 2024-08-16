@@ -1,23 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import FloatingBalance from '../components/FloatingBalance';
 import FloatingLoginButton from '../components/FloatingLoginButton';
-import TransferFunds from '../components/TransferFund'; // Import the TransferFunds component
+import TransferFunds from '../components/TransferFund';
 
 const Withdrawal = () => {
   const [coinValue, setCoinValue] = useState(3000);
-  const [suiValue, setSuiValue] = useState(3000 / 30000000);
+  const [masValue, setMasValue] = useState(coinValue / 30000000);
   const [zkLoginUserAddress, setZkLoginUserAddress] = useState(null);
   const [showTransfer, setShowTransfer] = useState(false);
+
+  useEffect(() => {
+    const savedAddress = localStorage.getItem("walletAddress");
+    if (savedAddress) {
+      setZkLoginUserAddress(savedAddress);
+    }
+  }, []);
 
   const handleCoinValueChange = (e) => {
     const value = e.target.value;
     setCoinValue(value);
-    setSuiValue(value / 30000000);
+    setMasValue(value / 30000);
   };
 
-  const handleWithdrawal = async () => {
+  const handleWithdrawal = () => {
+    if (!zkLoginUserAddress) {
+      alert("Please log in or create a wallet to proceed.");
+      return;
+    }
     setShowTransfer(true);
   };
 
@@ -39,10 +50,6 @@ const Withdrawal = () => {
     }
   };
 
-  const handleLogin = (address) => {
-    setZkLoginUserAddress(address);
-  };
-
   const router = useRouter();
 
   return (
@@ -54,14 +61,14 @@ const Withdrawal = () => {
       </Head>
       <div className="container">
         <FloatingBalance />
-        <FloatingLoginButton onLogin={handleLogin} />
+        <FloatingLoginButton onLogin={setZkLoginUserAddress} />
         <div className="exchangeContainer">
           <div className="field">
             <img src="/coin.png" alt="Coin" className="icon" />
             <input
               type="range"
               min="3000"
-              max="100000" // Set an appropriate max value
+              max="100000"
               step="100"
               value={coinValue}
               onChange={handleCoinValueChange}
@@ -81,7 +88,7 @@ const Withdrawal = () => {
             <img src="/sui.png" alt="Sui" className="icon" />
             <input
               type="number"
-              value={suiValue}
+              value={masValue}
               readOnly
               className="suiInput"
             />
@@ -89,7 +96,7 @@ const Withdrawal = () => {
         </div>
         <div className="rateAndButtons">
           <div className="rateContainer">
-            <div className="rate">Today's Rate<br />30000000 : 1 SUI</div>
+            <div className="rate">Today's Rate<br />30000000 : 1 MAS</div>
             <div className="buttons">
               <button className="confirmButton" onClick={handleWithdrawal}>Withdraw</button>
               <button className="cancelButton" onClick={() => router.back()}>Cancel</button>
@@ -97,7 +104,7 @@ const Withdrawal = () => {
           </div>
         </div>
         {showTransfer && zkLoginUserAddress && (
-          <TransferFunds userAddress={zkLoginUserAddress} suiValue={suiValue} onTransferComplete={handleTransferComplete} />
+          <TransferFunds userAddress={zkLoginUserAddress} masValue={masValue} onTransferComplete={handleTransferComplete} />
         )}
       </div>
       <style jsx>{`
