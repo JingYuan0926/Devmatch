@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { useRouter } from 'next/router';
-import FloatingBalance from './FloatingBalance';
-// import FloatingLoginButton from './FloatingLoginButton';
 import { WalletSelector } from "./WalletSelector";
+import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
+
+const APTOS_COIN = "0x1::aptos_coin::AptosCoin";
+const COIN_STORE = `0x1::coin::CoinStore<${APTOS_COIN}>`;
+const APTOS_NETWORK = Network.TESTNET;
 
 const GamePlay = () => {
-  const { connected } = useWallet();
+  const { connected, account } = useWallet();
   const mapWidth = 4240;
   const mapHeight = 2660;
   const scale = 0.4;
@@ -18,6 +21,23 @@ const GamePlay = () => {
   const [direction, setDirection] = useState('S');
   const [mapPosition, setMapPosition] = useState({ x: 0, y: 0 });
   const [isMounted, setIsMounted] = useState(false);
+  const [balance, setBalance] = useState(null);
+
+  // Initialize the Aptos SDK
+  const config = new AptosConfig({ network: APTOS_NETWORK });
+  const sdk = new Aptos(config);
+
+  // Function to check the user's balance
+  const checkBalance = async (accountAddress) => {
+    console.log('Checking balance for address:', accountAddress);
+    const balanceResource = await sdk.getAccountResource({
+      accountAddress,
+      resourceType: COIN_STORE,
+    });
+    // console.log('Balance resource:', balanceResource);
+    const amount = Number(balanceResource.coin.value);
+    console.log(`User's balance is: ${amount} APT`);
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -27,7 +47,15 @@ const GamePlay = () => {
       });
       setIsMounted(true);
     }
-  }, []);
+
+    if (connected && account?.address) {
+      console.log('Wallet connected:', account.address);
+      checkBalance(account.address); // Check balance when wallet is connected
+    } else {
+      console.log('Wallet not connected');
+      setBalance(null);
+    }
+  }, [connected, account]);
 
   const handleKeyDown = (e) => {
     if (e.key === '1') {
@@ -112,8 +140,14 @@ const GamePlay = () => {
 
   return (
     <div className="gameContainer">
-     {connected}
-     <WalletSelector />
+      <div className="walletSelectorWrapper" style={{
+        position: 'absolute',
+        left: "200px",
+        top: "10px",
+        zIndex: 1000
+      }}>
+        <WalletSelector />
+      </div>
       <div className="mapWrapper">
         <div className="mapContainer">
           <Image src="/assets/map.png" alt="Map" layout="fill" />
