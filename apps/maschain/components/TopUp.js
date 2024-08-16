@@ -47,7 +47,7 @@ const TopUp = () => {
   const handleReturnComplete = async () => {
     try {
         // Update the coin balance after the return is completed
-        const response = await fetch('/api/updateCoinBalanceForTopUp', {
+        const response = await fetch('/api/updateCoinBalance', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
