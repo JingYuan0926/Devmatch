@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Head from "next/head";
 
 export default function WalletsOverview() {
   const [wallets, setWallets] = useState([]);
@@ -63,7 +64,12 @@ export default function WalletsOverview() {
   };
 
   return (
-    <div>
+    <div className="glob">
+      <Head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+        <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Sedan+SC&display=swap" rel="stylesheet" />
+      </Head>
       <h1>Wallets Overview</h1>
       <table>
         <thead>
@@ -85,20 +91,54 @@ export default function WalletsOverview() {
       </table>
 
       <style jsx>{`
-        table {
+        body, html {
+          margin: 0;
+          padding: 0;
+          height: 100%;
+          overflow: hidden;
+        }
+        .glob {
+          font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
+          background-image: url('/paper.png');
+          background-size: cover;
+          background-position: center;
+          min-height: 97.3vh;
           width: 100%;
-          border-collapse: collapse;
+          padding: 20px;
+          box-sizing: border-box;
+          overflow-y: auto;
+        }
+        h1 {
+          font-size: 4rem;
+          margin-bottom: 20px;
+          text-align: center;
+          color: #2c3e50;
+        }
+        table {
+          width: 80%;
+          border-collapse: separate;
+          border-spacing: 0;
+          margin: 0 auto;
+          background-color: rgba(255, 248, 220, 0.7);
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
         th, td {
-          border: 1px solid #ddd;
-          padding: 8px;
-        }
-        th {
-          background-color: #f2f2f2;
+          border: 1px solid #d4a76a;
+          padding: 12px;
           text-align: left;
         }
+        th {
+          background-color: #d4a76a;
+          color: #fff;
+          font-weight: bold;
+        }
+        tr:nth-child(even) {
+          background-color: rgba(255, 248, 220, 0.9);
+        }
         tr:hover {
-          background-color: #f1f1f1;
+          background-color: rgba(212, 167, 106, 0.2);
         }
       `}</style>
     </div>
