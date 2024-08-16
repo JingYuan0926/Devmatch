@@ -1,36 +1,87 @@
-import React, { useState } from 'react';
-import Head from 'next/head';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import FloatingBalance from '../components/FloatingBalance';
+import FloatingLoginButton from '../components/FloatingLoginButton';
+import ReturnFunds from '../components/ReturnFunds';
+import Head from 'next/head';
 
 const TopUp = () => {
-  const [coinValue, setCoinValue] = useState(0);
-  const [suiValue, setSuiValue] = useState('');
-
-  const handleSuiValueChange = (e) => {
-    const value = e.target.value;
-    setSuiValue(value);
-    setCoinValue(Math.floor(value * 30000000));
-  };
-
-  const handleTopUp = async () => {
-    const response = await fetch('/api/updateCoinBalance', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ additionalCoins: coinValue }),
-    });
-
-    if (response.ok) {
-      alert('Top Up successful!');
-      router.reload();  // Reload the page to update the balance
-    } else {
-      alert('Top Up failed. Please try again.');
-    }
-  };
+  const [balance, setBalance] = useState(null);  // State to hold the balance
+  const [masValue, setMasValue] = useState(0.001);  // State to hold the token value input
+  const [coinValue, setCoinValue] = useState(masValue * 3000000);  // State to hold the coinValue calculated from masValue
+  const [zkLoginUserAddress, setZkLoginUserAddress] = useState(null);  // State to hold the user's wallet address
+  const [showReturn, setShowReturn] = useState(false);  // State to determine whether to show the ReturnFunds component
 
   const router = useRouter();
+
+  // Load the user's wallet address from local storage when the component mounts
+  useEffect(() => {
+    const savedAddress = localStorage.getItem("walletAddress");
+    if (savedAddress) {
+      setZkLoginUserAddress(savedAddress);
+    }
+  }, []);
+
+  // Log the zkLoginUserAddress to the console whenever it changes
+  useEffect(() => {
+    console.log("zkLoginUserAddress updated:", zkLoginUserAddress);
+  }, [zkLoginUserAddress]);
+
+  // Handle the masValue input change
+  const handleMasValueChange = (e) => {
+    const value = e.target.value;
+    setMasValue(value);
+    setCoinValue(value * 3000000);  // Convert masValue to coinValue using a fixed rate
+  };
+
+  // Trigger the return (top-up) when the top-up button is clicked
+  const handleTopUp = () => {
+    if (!zkLoginUserAddress) {
+      alert("Please log in or create a wallet to proceed.");
+      return;
+    }
+    setShowReturn(true);  // Show the ReturnFunds component
+  };
+
+  // Handle the return completion
+  const handleReturnComplete = async () => {
+    try {
+        // Update the coin balance after the return is completed
+        const response = await fetch('/api/updateCoinBalanceForTopUp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ addedCoins: parseInt(coinValue, 10) }),  // Send the added coins value
+        });
+
+        if (response.ok) {
+            // Fetch the updated wallet balance after the return is completed
+            const balanceResponse = await fetch('/api/getWalletBalance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ walletAddress: zkLoginUserAddress }),  // Send the user's wallet address
+            });
+
+            if (balanceResponse.ok) {
+                const updatedBalance = await balanceResponse.json();
+                setBalance(updatedBalance.balance);  // Update the balance state with the new balance
+                alert('Top-up successful!');
+                router.reload();  // Reload the page to update the UI
+            } else {
+                alert('Failed to fetch updated balance');
+            }
+        } else {
+            const result = await response.json();
+            alert(`Top-up failed: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error completing top-up:', error);
+        alert('Error completing top-up');
+    }
+  };
 
   return (
     <>
@@ -40,50 +91,57 @@ const TopUp = () => {
         <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Sedan+SC&display=swap" rel="stylesheet" />
       </Head>
       <div className="container">
-        <FloatingBalance />
+        <FloatingBalance balance={balance} />
+        <FloatingLoginButton onLogin={setZkLoginUserAddress} />
         <div className="exchangeContainer">
-          <div className="field sui">
-            <img
-              src="/sui.png"
-              alt="Sui"
-              className="icon"
+          <div className="field">
+            <img src="/sui.png" alt="Sui" className="icon" />
+            <input
+              type="range"
+              min="0.001"
+              max="1"
+              step="0.001"
+              value={masValue}
+              onChange={handleMasValueChange}
+              className="slider"
             />
             <input
               type="number"
-              value={suiValue}
-              onChange={handleSuiValueChange}
-              className="suiInput"
+              value={masValue}
+              onChange={handleMasValueChange}
+              className="input"
               placeholder="0"
+              min="0.001"
+              step="0.001"
             />
           </div>
           <span className="arrow">→</span>
           <div className="field">
-            <img
-              src="/coin.png"
-              alt="Coin"
-              className="icon"
-            />
+            <img src="/coin.png" alt="Coin" className="icon" />
             <input
               type="number"
               value={coinValue}
               readOnly
-              className="input"
+              className="suiInput"
             />
           </div>
         </div>
         <div className="rateAndButtons">
           <div className="rateContainer">
-            <div className="rate">Today's Rate<br />1 SUI : 30000000</div>
+            <div className="rate">Today's Rate<br />1 MAS : 30000000 Coins</div>
             <div className="buttons">
               <button className="confirmButton" onClick={handleTopUp}>Top Up</button>
               <button className="cancelButton" onClick={() => router.back()}>Cancel</button>
             </div>
           </div>
         </div>
+        {showReturn && zkLoginUserAddress && (
+          <ReturnFunds userAddress={zkLoginUserAddress} masValue={masValue} onReturnComplete={handleReturnComplete} />
+        )}
       </div>
       <style jsx>{`
         .container {
-          background-image: url('/background2.jpg'); /* Place your second image in the public folder with this name */
+          background-image: url('/background2.jpg');
           background-color: brown;
           background-size: cover;
           background-position: center;
@@ -94,7 +152,7 @@ const TopUp = () => {
           align-items: center;
           gap: 30px;
           padding: 20px;
-          font-family: 'Pixelify Sans', 'Courier New', Courier, monospace; /* Same font as SchoolTutorial */
+          font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
         }
         .exchangeContainer {
           display: flex;
@@ -118,6 +176,10 @@ const TopUp = () => {
           margin-top: 20px;
           margin-bottom: 20px;
         }
+        .slider {
+          width: 300px;
+          margin: 10px 0;
+        }
         .input {
           width: 205px;
           padding: 3px 10px;
@@ -129,8 +191,8 @@ const TopUp = () => {
           padding: 5px;
           font-size: 30px;
           text-align: center;
-          border: none; /* Remove the border */
-          background: transparent; /* Optional: make the background transparent */
+          border: none;
+          background: transparent;
         }
         .arrow {
           font-size: 200px;
