@@ -11,6 +11,7 @@ const TransferFunds = ({ userAddress, masValue, onTransferComplete }) => {
     const transferFunds = async () => {
         setIsLoading(true);
         setStatus('Initiating transfer...');
+        console.log('Starting transfer process...'); // Debug log
 
         try {
             // MasChain API configuration
@@ -18,14 +19,20 @@ const TransferFunds = ({ userAddress, masValue, onTransferComplete }) => {
             const CLIENT_ID = 'fbe3e68b64bc94d69c8f630b32ae2815a1cc1c80daf69175e0a2f7f05dad6c9d';
             const CLIENT_SECRET = 'sk_ab29a87ed862fd9cf3b2922c7779d9d6e4def9ce059f5380d0b928ddd8cd91a5';
 
+            console.log('MasChain API URL:', API_URL); // Debug log
+            console.log('Client ID:', CLIENT_ID); // Debug log
+            console.log('Amount to transfer:', masValue); // Debug log
+
             // Prepare the request body
             const requestBody = {
-                wallet_address: '0x535d8b6CF9B414da01c0FE96cAF26cb0726Cb397', // Merchant wallet address
+                wallet_address: '0x8c066adf75902EC0De00F4B3B21d2b407EaF2C95', // Merchant wallet address
                 to: userAddress,  // User's wallet address
                 amount: masValue.toString(),
                 contract_address: '0x9c56DE7ab3a785BDc070BEcc8ee8B882f4670A77', // Token contract address
                 callback_url: 'https://your-callback-url.com/transfer-complete'
             };
+
+            console.log('Request Body:', requestBody); // Debug log
 
             // Make the API call to transfer tokens
             const response = await fetch(`${API_URL}/api/token/token-transfer`, {
@@ -38,11 +45,17 @@ const TransferFunds = ({ userAddress, masValue, onTransferComplete }) => {
                 body: JSON.stringify(requestBody)
             });
 
+            console.log('API Response Status:', response.status); // Debug log
             const result = await response.json();
+            console.log('API Response:', result); // Debug log
 
-            if (result.status === 200) {
-                setStatus(`Transfer initiated! Transaction hash: ${result.result.transactionHash}`);
-                alert(`Transfer initiated! Transaction hash: ${result.result.transactionHash}`);
+            if (response.ok && result.status === 200) {
+                const transactionHash = result.result.transactionHash;
+                setStatus(`Transfer initiated! Transaction hash: ${transactionHash}`);
+                alert(`Transfer initiated! Transaction hash: ${transactionHash}`);
+
+                // Log the transaction hash
+                console.log('Transaction Hash:', transactionHash);
 
                 // Call the onTransferComplete callback to trigger balance refresh
                 if (onTransferComplete) {
@@ -57,6 +70,7 @@ const TransferFunds = ({ userAddress, masValue, onTransferComplete }) => {
             alert(`Transfer failed: ${error.message}`);
         } finally {
             setIsLoading(false);
+            console.log('Transfer process finished.'); // Debug log
         }
     };
 

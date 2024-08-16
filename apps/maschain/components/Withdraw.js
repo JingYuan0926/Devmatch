@@ -7,9 +7,11 @@ import TransferFunds from '../components/TransferFund';
 
 const Withdrawal = () => {
   const [coinValue, setCoinValue] = useState(3000);
-  const [masValue, setMasValue] = useState(coinValue / 30000000);
+  const [masValue, setMasValue] = useState(coinValue / 3000000);
   const [zkLoginUserAddress, setZkLoginUserAddress] = useState(null);
   const [showTransfer, setShowTransfer] = useState(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     const savedAddress = localStorage.getItem("walletAddress");
@@ -18,10 +20,15 @@ const Withdrawal = () => {
     }
   }, []);
 
+  useEffect(() => {
+    // Log to verify zkLoginUserAddress is set correctly
+    console.log("zkLoginUserAddress updated:", zkLoginUserAddress);
+  }, [zkLoginUserAddress]);
+
   const handleCoinValueChange = (e) => {
     const value = e.target.value;
     setCoinValue(value);
-    setMasValue(value / 30000);
+    setMasValue(value / 3000); // Ensure this conversion logic is correct
   };
 
   const handleWithdrawal = () => {
@@ -33,25 +40,29 @@ const Withdrawal = () => {
   };
 
   const handleTransferComplete = async () => {
-    const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ deductedCoins: parseInt(coinValue, 10) }),
-    });
+    try {
+        const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ deductedCoins: parseInt(coinValue, 10) }),
+        });
 
-    if (response.ok) {
-      alert('Withdrawal successful!');
-      router.reload();  // Reload the page to update the balance
-    } else {
-      const result = await response.json();
-      alert(`Withdrawal failed: ${result.error}`);
+        if (response.ok) {
+            alert('Withdrawal successful!');
+            router.reload();  // Reload the page to update the balance
+        } else {
+            const result = await response.json();
+            alert(`Withdrawal failed: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error completing transfer:', error);
+        alert('Error completing transfer');
     }
-  };
+};
 
-  const router = useRouter();
-
+  
   return (
     <>
       <Head>

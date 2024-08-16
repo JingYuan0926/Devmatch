@@ -9,7 +9,7 @@ export default function CreateWalletComponent() {
   const [walletAddress, setWalletAddress] = useState(null);
   const [balance, setBalance] = useState(null);
 
-  const CONTRACT_ADDRESS = "0x9c56DE7ab3a785BDc070BEcc8ee8B882f4670A77";
+  const CONTRACT_ADDRESS = "0x0FFC18b6C7F8a3F204D2c39843Ea8d5C87F4CC61";
 
   useEffect(() => {
     const savedWalletAddress = localStorage.getItem("walletAddress");
@@ -104,7 +104,12 @@ export default function CreateWalletComponent() {
       const result = JSON.parse(responseText);
       
       if (result.status === 200) {
-        setBalance(result.result);
+        // Ensure that the balance is a number before applying toFixed
+        const balanceValue = parseFloat(result.result);
+        if (isNaN(balanceValue)) {
+          throw new Error(`Balance is not a number: ${result.result}`);
+        }
+        setBalance(balanceValue.toFixed(8)); // Set balance with 8 decimal places
       } else {
         throw new Error(`Unexpected response format: ${JSON.stringify(result)}`);
       }
@@ -113,6 +118,7 @@ export default function CreateWalletComponent() {
       alert("Error fetching balance: " + error.message);
     }
   };
+  
   return (
     <div className="wallet-container">
       {walletAddress ? (
