@@ -150,14 +150,15 @@ export default function CreateWalletComponent() {
         <div className="wallet-info">
           <div className="wallet-address-box">
             <span className="truncated-address">
-              {`${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`}
+              <img className="logo" src="/pen.png" alt="SUI Logo" width="50" height="50" />
             </span>
             <span className="full-address">Address: {walletAddress}</span>
             {balance !== null && <span className="balance">Balance: {balance} PEN</span>}
-          </div>
-          <button onClick={handleLogout} className="logout-button">
+            <button onClick={handleLogout} className="logout-button">
             Logout
           </button>
+          </div>
+          
         </div>
       ) : (
         <button onClick={openModal} className="create-wallet-button">
@@ -245,25 +246,29 @@ export default function CreateWalletComponent() {
         .wallet-address-box {
           padding: 10px;
           border-radius: 5px;
-          background-color: #4caf50;
+          background: linear-gradient(to right, #FFF3B0, #FFE5E5, #FFD5F3, #F6D5FF);
           color: white;
           cursor: pointer;
           position: relative;
           overflow: hidden;
-          width: 100px;
-          height: 20px;
+          width: 120px;
+          height: 60px;
           transition: all 0.3s ease;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
 
         .wallet-info:hover .wallet-address-box {
           width: 300px;
           height: auto;
+          color: #333;
+          padding-bottom: 50px; /* Ensure there is space for the logout button */
         }
 
         .balance {
           display: block;
           margin-top: 5px;
           font-weight: bold;
+          color: #333;
         }
 
         .truncated-address {
@@ -284,32 +289,37 @@ export default function CreateWalletComponent() {
           opacity: 0;
         }
 
+
         .wallet-info:hover .full-address {
           opacity: 1;
         }
 
         .logout-button {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          width: 100%;
-          padding: 10px;
-          border-radius: 0 0 5px 5px;
-          background-color: #f44336;
-          color: white;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          opacity: 0;
-          visibility: hidden;
-        }
+            position: absolute;
+            bottom: 10px; /* Position it within the expanded area */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #e53935;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+          }
+
 
         .wallet-info:hover .logout-button {
           opacity: 1;
           visibility: visible;
+          
         }
 
         .logout-button:hover {
-          background-color: #e53935;
+          background-color: #FFB3B3;
+          
         }
 
         .modal-overlay {
