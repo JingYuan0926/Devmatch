@@ -6,15 +6,14 @@ import ReturnFunds from '../components/ReturnFunds';
 import Head from 'next/head';
 
 const TopUp = () => {
-  const [balance, setBalance] = useState(null);  // State to hold the balance
-  const [masValue, setMasValue] = useState(0.001);  // State to hold the token value input
-  const [coinValue, setCoinValue] = useState(masValue * 3000000);  // State to hold the coinValue calculated from masValue
-  const [zkLoginUserAddress, setZkLoginUserAddress] = useState(null);  // State to hold the user's wallet address
-  const [showReturn, setShowReturn] = useState(false);  // State to determine whether to show the ReturnFunds component
+  const [balance, setBalance] = useState(null);
+  const [masValue, setMasValue] = useState(0.001);
+  const [coinValue, setCoinValue] = useState(masValue * 3000000);
+  const [zkLoginUserAddress, setZkLoginUserAddress] = useState(null);
+  const [showReturn, setShowReturn] = useState(false);
 
   const router = useRouter();
 
-  // Load the user's wallet address from local storage when the component mounts
   useEffect(() => {
     const savedAddress = localStorage.getItem("walletAddress");
     if (savedAddress) {
@@ -22,67 +21,65 @@ const TopUp = () => {
     }
   }, []);
 
-  // Log the zkLoginUserAddress to the console whenever it changes
   useEffect(() => {
     console.log("zkLoginUserAddress updated:", zkLoginUserAddress);
   }, [zkLoginUserAddress]);
 
-  // Handle the masValue input change
   const handleMasValueChange = (e) => {
-    const value = e.target.value;
-    setMasValue(value);
-    setCoinValue(value * 3000000);  // Convert masValue to coinValue using a fixed rate
+    const value = parseFloat(e.target.value);
+    if (isNaN(value)) {
+      setMasValue(0);
+      setCoinValue(0);
+    } else {
+      setMasValue(value);
+      setCoinValue(value * 3000000);
+    }
   };
 
-  // Trigger the return (top-up) when the top-up button is clicked
   const handleTopUp = () => {
     if (!zkLoginUserAddress) {
       alert("Please log in or create a wallet to proceed.");
       return;
     }
-    setShowReturn(true);  // Show the ReturnFunds component
+    setShowReturn(true);
   };
 
-  // Handle the return completion
   const handleReturnComplete = async () => {
     try {
-        // Update the coin balance after the return is completed
-        const response = await fetch('/api/updateCoinBalance', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ addedCoins: parseInt(coinValue, 10) }),  // Send the added coins value
+      const response = await fetch('/api/updateCoinBalance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ addedCoins: parseInt(coinValue, 10) }),
+      });
+
+      if (response.ok) {
+        const balanceResponse = await fetch('/api/getWalletBalance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ walletAddress: zkLoginUserAddress }),
         });
 
-        if (response.ok) {
-            // Fetch the updated wallet balance after the return is completed
-            const balanceResponse = await fetch('/api/getWalletBalance', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ walletAddress: zkLoginUserAddress }),  // Send the user's wallet address
-            });
-
-            if (balanceResponse.ok) {
-                const updatedBalance = await balanceResponse.json();
-                setBalance(updatedBalance.balance);  // Update the balance state with the new balance
-                alert('Top-up successful!');
-                router.reload();  // Reload the page to update the UI
-            } else {
-                alert('Failed to fetch updated balance');
-            }
+        if (balanceResponse.ok) {
+          const updatedBalance = await balanceResponse.json();
+          setBalance(updatedBalance.balance);
+          alert('Top-up successful!');
+          router.reload();
         } else {
-            const result = await response.json();
-            alert(`Top-up failed: ${result.error}`);
+          alert('Failed to fetch updated balance');
         }
+      } else {
+        const result = await response.json();
+        alert(`Top-up failed: ${result.error}`);
+      }
     } catch (error) {
-        console.error('Error completing top-up:', error);
-        alert('Error completing top-up');
+      console.error('Error completing top-up:', error);
+      alert('Error completing top-up');
     }
   };
-
   return (
     <>
       <Head>
