@@ -1,26 +1,32 @@
 import fs from 'fs';
 import path from 'path';
 
-export default function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+export default async function handler(req, res) {
+  if (req.method === 'POST') {
+    const { walletEntry } = req.body;
 
-  const { walletAddress } = req.body;
+    // Construct the correct file path
+    const filePath = path.join(process.cwd(),'wallets.txt');
+    
+    try {
+      console.log("Attempting to save wallet entry:", walletEntry);
+      
+      // Ensure the file exists; if not, create it
+      if (!fs.existsSync(filePath)) {
+        console.log("File does not exist, creating new file:", filePath);
+        fs.writeFileSync(filePath, '', 'utf8');
+      }
+      
+      // Append the wallet entry to the file
+      fs.appendFileSync(filePath, `${walletEntry}\n`, 'utf8');
+      console.log("Wallet entry saved successfully");
 
-  if (!walletAddress) {
-    return res.status(400).json({ error: 'Wallet address is required' });
-  }
-
-  const filePath = path.join(process.cwd(), 'wallets.txt');
-  const entry = `${walletAddress}\n`;
-
-  fs.appendFile(filePath, entry, (err) => {
-    if (err) {
-      console.error('Failed to write to file', err);
-      return res.status(500).json({ error: 'Failed to save wallet address' });
+      res.status(200).json({ message: 'Wallet entry saved successfully' });
+    } catch (error) {
+      console.error("Error saving wallet entry:", error);
+      res.status(500).json({ error: 'Failed to save wallet entry' });
     }
-
-    res.status(200).json({ message: 'Wallet address saved successfully' });
-  });
+  } else {
+    res.status(405).json({ message: 'Method not allowed' });
+  }
 }

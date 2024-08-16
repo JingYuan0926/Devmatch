@@ -13,17 +13,18 @@ export default function WalletsOverview() {
       if (!response.ok) {
         throw new Error("Failed to fetch wallets");
       }
-      const walletAddresses = await response.json();
+      const walletsData = await response.json();
 
-      const walletsData = await Promise.all(walletAddresses.map(async (address) => {
-        const balance = await fetchBalance(address);
+      const updatedWalletsData = await Promise.all(walletsData.map(async (wallet) => {
+        const balance = await fetchBalance(wallet.address);
         return {
-          address,
+          name: wallet.name,
+          address: wallet.address,
           balance
         };
       }));
 
-      setWallets(walletsData);
+      setWallets(updatedWalletsData);
     } catch (error) {
       console.error("Error fetching wallets data:", error);
     }
@@ -67,6 +68,7 @@ export default function WalletsOverview() {
       <table>
         <thead>
           <tr>
+            <th>Wallet Name</th>
             <th>Wallet Address</th>
             <th>Balance</th>
           </tr>
@@ -74,6 +76,7 @@ export default function WalletsOverview() {
         <tbody>
           {wallets.map((wallet, index) => (
             <tr key={index}>
+              <td>{wallet.name}</td>
               <td>{wallet.address}</td>
               <td>{wallet.balance}</td>
             </tr>

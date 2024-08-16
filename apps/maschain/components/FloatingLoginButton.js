@@ -59,35 +59,35 @@ export default function CreateWalletComponent() {
       fetchBalance(address);
       closeModal();
   
-      // Send wallet address to Next.js API route to save in a file
-      await saveWalletAddressToFile(address);
+      // Save wallet name and address in the desired format
+      await saveWalletNameAndAddressToFile(walletName, address);
     } catch (error) {
       console.error("Error creating user:", error);
       alert("Error creating user");
     }
   };
-  
-  const saveWalletAddressToFile = async (address) => {
+
+  const saveWalletNameAndAddressToFile = async (walletName, address) => {
     try {
+      const walletEntry = `${walletName},${address}`;
       const response = await fetch("/api/save-wallet", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ walletAddress: address }),
+        body: JSON.stringify({ walletEntry }),
       });
   
       if (!response.ok) {
-        throw new Error("Failed to save wallet address to file");
+        throw new Error("Failed to save wallet name and address to file");
       }
   
-      console.log("Wallet address saved to file successfully");
+      console.log("Wallet name and address saved to file successfully");
     } catch (error) {
-      console.error("Error saving wallet address to file:", error);
-      alert("Error saving wallet address to file");
+      console.error("Error saving wallet name and address to file:", error);
+      alert("Error saving wallet name and address to file");
     }
   };
-  
 
   const handleLogout = () => {
     localStorage.removeItem("walletAddress");
