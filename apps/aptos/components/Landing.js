@@ -1,5 +1,6 @@
 import Head from 'next/head';
-import FloatingLoginButton from '../components/FloatingLoginButton'; // Import the FloatingLoginButton component
+//import FloatingLoginButton from '../components/FloatingLoginButton'; // Import the FloatingLoginButton component
+
 import StartGameButton from '../components/StartGame'; // Import the StartGameButton component
 import Image from 'next/image';
 
@@ -13,7 +14,7 @@ const LandingPage = () => {
       </Head>
       <main className="main">
         <div className="buttons">
-          <FloatingLoginButton />
+          {/* <FloatingLoginButton /> */}
           <StartGameButton /> 
         </div>
         <div className="logo-container">

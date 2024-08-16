@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { useRouter } from 'next/router';
 import FloatingBalance from './FloatingBalance';
-import FloatingLoginButton from './FloatingLoginButton';
+// import FloatingLoginButton from './FloatingLoginButton';
+import { WalletSelector } from "./WalletSelector";
 
 const GamePlay = () => {
+  const { connected } = useWallet();
   const mapWidth = 4240;
   const mapHeight = 2660;
   const scale = 0.4;
@@ -109,7 +112,8 @@ const GamePlay = () => {
 
   return (
     <div className="gameContainer">
-      <FloatingLoginButton />
+     {connected}
+     <WalletSelector />
       <div className="mapWrapper">
         <div className="mapContainer">
           <Image src="/assets/map.png" alt="Map" layout="fill" />
