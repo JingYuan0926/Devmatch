@@ -30,7 +30,7 @@ export default function CreateWalletComponent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = { name, email, ic, walletName };
-
+  
     try {
       const response = await fetch(
         `https://service-testnet.maschain.com/api/wallet/create-user`,
@@ -46,23 +46,48 @@ export default function CreateWalletComponent() {
           body: JSON.stringify(data),
         }
       );
-
+  
       if (!response.ok) {
         throw new Error("Failed to create user");
       }
-
+  
       const result = await response.json();
       const address = result.result.wallet.wallet_address;
-
+  
       localStorage.setItem("walletAddress", address);
       setWalletAddress(address);
       fetchBalance(address);
       closeModal();
+  
+      // Send wallet address to Next.js API route to save in a file
+      await saveWalletAddressToFile(address);
     } catch (error) {
       console.error("Error creating user:", error);
       alert("Error creating user");
     }
   };
+  
+  const saveWalletAddressToFile = async (address) => {
+    try {
+      const response = await fetch("/api/save-wallet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ walletAddress: address }),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to save wallet address to file");
+      }
+  
+      console.log("Wallet address saved to file successfully");
+    } catch (error) {
+      console.error("Error saving wallet address to file:", error);
+      alert("Error saving wallet address to file");
+    }
+  };
+  
 
   const handleLogout = () => {
     localStorage.removeItem("walletAddress");
