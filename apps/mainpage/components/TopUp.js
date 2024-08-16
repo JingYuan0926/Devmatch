@@ -1,46 +1,33 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import FloatingBalance from '../components/FloatingBalance';
-import FloatingLoginButton from '../components/FloatingLoginButton';
-import TransferFunds from '../components/TransferFund'; // Import the TransferFunds component
+import FloatingBalance from './FloatingBalance';
 
-const Withdrawal = () => {
-  const [coinValue, setCoinValue] = useState(3000);
-  const [suiValue, setSuiValue] = useState(3000 / 30000000);
-  const [zkLoginUserAddress, setZkLoginUserAddress] = useState(null);
-  const [showTransfer, setShowTransfer] = useState(false);
+const TopUp = () => {
+  const [coinValue, setCoinValue] = useState(0);
+  const [suiValue, setSuiValue] = useState('');
 
-  const handleCoinValueChange = (e) => {
+  const handleSuiValueChange = (e) => {
     const value = e.target.value;
-    setCoinValue(value);
-    setSuiValue(value / 30000000);
+    setSuiValue(value);
+    setCoinValue(Math.floor(value * 30000000));
   };
 
-  const handleWithdrawal = async () => {
-    setShowTransfer(true);
-  };
-
-  const handleTransferComplete = async () => {
-    const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
+  const handleTopUp = async () => {
+    const response = await fetch('/api/updateCoinBalance', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ deductedCoins: parseInt(coinValue, 10) }),
+      body: JSON.stringify({ additionalCoins: coinValue }),
     });
 
     if (response.ok) {
-      alert('Withdrawal successful!');
+      alert('Top Up successful!');
       router.reload();  // Reload the page to update the balance
     } else {
-      const result = await response.json();
-      alert(`Withdrawal failed: ${result.error}`);
+      alert('Top Up failed. Please try again.');
     }
-  };
-
-  const handleLogin = (address) => {
-    setZkLoginUserAddress(address);
   };
 
   const router = useRouter();
@@ -54,55 +41,49 @@ const Withdrawal = () => {
       </Head>
       <div className="container">
         <FloatingBalance />
-        <FloatingLoginButton onLogin={handleLogin} />
         <div className="exchangeContainer">
-          <div className="field">
-            <img src="/coin.png" alt="Coin" className="icon" />
-            <input
-              type="range"
-              min="3000"
-              max="100000" // Set an appropriate max value
-              step="100"
-              value={coinValue}
-              onChange={handleCoinValueChange}
-              className="slider"
-            />
-            <input
-              type="number"
-              value={coinValue}
-              onChange={handleCoinValueChange}
-              className="input"
-              placeholder="0"
-              min="3000"
-            />
-          </div>
-          <span className="arrow">→</span>
           <div className="field sui">
-            <img src="/sui.png" alt="Sui" className="icon" />
+            <img
+              src="/sui.png"
+              alt="Sui"
+              className="icon"
+            />
             <input
               type="number"
               value={suiValue}
-              readOnly
+              onChange={handleSuiValueChange}
               className="suiInput"
+              placeholder="0"
+            />
+          </div>
+          <span className="arrow">→</span>
+          <div className="field">
+            <img
+              src="/coin.png"
+              alt="Coin"
+              className="icon"
+            />
+            <input
+              type="number"
+              value={coinValue}
+              readOnly
+              className="input"
             />
           </div>
         </div>
         <div className="rateAndButtons">
           <div className="rateContainer">
-            <div className="rate">Today's Rate<br />30000000 : 1 SUI</div>
+            <div className="rate">Today's Rate<br />1 SUI : 30000000</div>
             <div className="buttons">
-              <button className="confirmButton" onClick={handleWithdrawal}>Withdraw</button>
+              <button className="confirmButton" onClick={handleTopUp}>Top Up</button>
               <button className="cancelButton" onClick={() => router.back()}>Cancel</button>
             </div>
           </div>
         </div>
-        {showTransfer && zkLoginUserAddress && (
-          <TransferFunds userAddress={zkLoginUserAddress} suiValue={suiValue} onTransferComplete={handleTransferComplete} />
-        )}
       </div>
       <style jsx>{`
         .container {
-          background-image: url('/background2.jpg');
+          background-image: url('/background2.jpg'); /* Place your second image in the public folder with this name */
           background-color: brown;
           background-size: cover;
           background-position: center;
@@ -113,7 +94,7 @@ const Withdrawal = () => {
           align-items: center;
           gap: 30px;
           padding: 20px;
-          font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
+          font-family: 'Pixelify Sans', 'Courier New', Courier, monospace; /* Same font as SchoolTutorial */
         }
         .exchangeContainer {
           display: flex;
@@ -137,10 +118,6 @@ const Withdrawal = () => {
           margin-top: 20px;
           margin-bottom: 20px;
         }
-        .slider {
-          width: 300px;
-          margin: 10px 0;
-        }
         .input {
           width: 205px;
           padding: 3px 10px;
@@ -152,8 +129,8 @@ const Withdrawal = () => {
           padding: 5px;
           font-size: 30px;
           text-align: center;
-          border: none;
-          background: transparent;
+          border: none; /* Remove the border */
+          background: transparent; /* Optional: make the background transparent */
         }
         .arrow {
           font-size: 200px;
@@ -207,4 +184,4 @@ const Withdrawal = () => {
   );
 }
 
-export default Withdrawal;
+export default TopUp;

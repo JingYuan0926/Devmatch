@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import FloatingBalance from './FloatingBalance';
-import FloatingLoginButton from './FloatingLoginButton';
 
 const GamePlay = () => {
   const mapWidth = 4240;
@@ -109,7 +108,6 @@ const GamePlay = () => {
 
   return (
     <div className="gameContainer">
-      <FloatingLoginButton />
       <div className="mapWrapper">
         <div className="mapContainer">
           <Image src="/assets/map.png" alt="Map" layout="fill" />

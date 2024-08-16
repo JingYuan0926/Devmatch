@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import StartGameButton from '../components/StartGame'; // Import the StartGameButton component
+import StartGameButton from './StartGame'; // Import the StartGameButton component
 import Image from 'next/image';
 
 const LandingPage = () => {
