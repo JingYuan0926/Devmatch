@@ -125,7 +125,7 @@ const TopUp = () => {
         </div>
         <div className="rateAndButtons">
           <div className="rateContainer">
-            <div className="rate">Today's Rate<br />1 MAS : 30000000 Coins</div>
+            <div className="rate">Today's Rate<br />1 PEN : 3000000 Coins</div>
             <div className="buttons">
               <button className="confirmButton" onClick={handleTopUp}>Top Up</button>
               <button className="cancelButton" onClick={() => router.back()}>Cancel</button>
