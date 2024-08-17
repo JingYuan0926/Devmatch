@@ -1,12 +1,15 @@
+import StartGameButton from '../components/StartGame1';
 import CreateWallet from '../components/CreateWallet';
+
 import Image from 'next/image';
 
 export default function CreateWalletPage() {
   return (
     <div className="container">
       <div className="modal-container">
-        
         <CreateWallet />
+        <StartGameButton
+         />
       </div>
       <div className="character-container">
         <Image src="/csy.gif" alt="Character" width={400} height={400} />
