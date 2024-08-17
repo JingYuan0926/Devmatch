@@ -101,6 +101,10 @@ const LandingPage = () => {
           top: -250px;
           transform: translateY(-50%);
         }
+
+        .wallet-container {
+          display:none;
+      }
       `}</style>
     </div>
   );

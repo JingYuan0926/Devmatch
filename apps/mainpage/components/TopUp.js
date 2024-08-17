@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import FloatingBalance from '../components/FloatingBalance';
+import FloatingLoginButton from '../components/FloatingLoginButton';
+import Head from 'next/head';
 
 const TopUp = () => {
   const [balance, setBalance] = useState(null);
