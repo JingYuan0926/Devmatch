@@ -1,5 +1,5 @@
 import StartGameButton from '../components/StartGame1';
-import CreateWalletComponent from '../components/FloatingLoginButton';
+import FloatingLoginButton from '../components/FloatingLoginButton'; // Import the FloatingLoginButton component
 
 import Image from 'next/image';
 
@@ -7,8 +7,9 @@ export default function CreateWalletPage() {
   return (
     <div className="container">
       <div className="modal-container">
-        <CreateWalletComponent />
-        <StartGameButton/>
+        <FloatingLoginButton />
+        <StartGameButton
+         />
       </div>
       <div className="character-container">
         <Image src="/csy.gif" alt="Character" width={400} height={400} />
@@ -41,6 +42,7 @@ export default function CreateWalletPage() {
           justify-content: center;
           align-items: center;
         }
+
       `}</style>
     </div>
   );

@@ -16,6 +16,34 @@
         "price": 1200,
         "imageUrl": "/lamborghini.png",
         "available": false
+      },
+      {
+        "id": 6,
+        "name": "Porsche",
+        "price": 1000,
+        "imageUrl": "/porsche.png",
+        "available": false
+      },
+      {
+        "id": 5,
+        "name": "Mercedes",
+        "price": 900,
+        "imageUrl": "/mercedes.png",
+        "available": false
+      },
+      {
+        "id": 3,
+        "name": "Ferrari",
+        "price": 1200,
+        "imageUrl": "/ferrari.png",
+        "available": false
+      },
+      {
+        "id": 4,
+        "name": "BMW",
+        "price": 950,
+        "imageUrl": "/bmw.png",
+        "available": false
       }
     ]
   }

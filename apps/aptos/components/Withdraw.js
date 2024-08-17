@@ -30,6 +30,8 @@ const Withdrawal = () => {
       alert("Please connect your wallet first!");
       return;
     }
+    setShowTransfer(true);
+  };
 
     setTxnInProgress(true);
     try {
@@ -135,7 +137,7 @@ const Withdrawal = () => {
           background-color: brown;
           background-size: cover;
           background-position: center;
-          min-height: 100vh;
+          height: 100vh;
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -170,13 +172,17 @@ const Withdrawal = () => {
           width: 300px;
           margin: 10px 0;
         }
-        .input, .aptosInput {
+        .input {
           width: 205px;
           padding: 3px 10px;
           font-size: 30px;
           text-align: center;
         }
         .aptosInput {
+          width: 205px;
+          padding: 5px;
+          font-size: 30px;
+          text-align: center;
           border: none;
           background: transparent;
         }
@@ -222,10 +228,6 @@ const Withdrawal = () => {
         .confirmButton {
           background-color: green;
           color: white;
-        }
-        .confirmButton:disabled {
-          background-color: gray;
-          cursor: not-allowed;
         }
         .cancelButton {
           background-color: red;
