@@ -1,12 +1,10 @@
 import React from 'react';
-import Withdrawal from '../components/Withdraw';
-import FloatingLoginButton from '../components/FloatingLoginButton';
+import Withdrawal from '../components/withdraw';
 import FloatingBalance from '../components/FloatingBalance';
 
 const BankPage = () => {
   return (
     <div>
-      <FloatingLoginButton />
       <FloatingBalance />
       <Withdrawal />
     </div>

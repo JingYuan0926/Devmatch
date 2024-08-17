@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-
+    
 const StartGameButton = () => {
   const router = useRouter();
 

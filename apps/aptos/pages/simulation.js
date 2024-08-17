@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import FloatingLoginButton from '../components/FloatingLoginButton';
 import FloatingBalance from '../components/FloatingBalance';
 
 export default function Simulation() {
@@ -52,7 +51,6 @@ export default function Simulation() {
   return (
     <div className="container">
       <FloatingBalance />
-      <FloatingLoginButton />
       <Head>
         <title>Trade Decision</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />

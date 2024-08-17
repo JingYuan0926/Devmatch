@@ -1,48 +1,100 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { WalletSelector } from "../components/WalletSelector";
+import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 import FloatingBalance from '../components/FloatingBalance';
-import TransferFunds from '../components/TransferFund'; // Import the TransferFunds component
+
+const APTOS_NETWORK = Network.DEVNET;
+const MODULE_ADDRESS = "0xee870cf0134dfd104150cad571d58315e67a8e36a51a16369a369b2d51a045b98";
+const MODULE_NAME = "faucet1";
+const CLAIM_FUNCTION_NAME = "claim";
+
+const config = new AptosConfig({ network: APTOS_NETWORK });
+const aptos = new Aptos(config);
 
 const Withdrawal = () => {
   const [coinValue, setCoinValue] = useState(3000);
-  const [suiValue, setSuiValue] = useState(3000 / 30000000);
-  const [zkLoginUserAddress, setZkLoginUserAddress] = useState(null);
-  const [showTransfer, setShowTransfer] = useState(false);
+  const [aptosValue, setAptosValue] = useState(3000 / 30000000);
+  const [txnInProgress, setTxnInProgress] = useState(false);
+  const { connected, account, signAndSubmitTransaction } = useWallet();
+  const [balance, setBalance] = useState(null);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (connected && account?.address) {
+      checkBalance(account.address);
+    } else {
+      setBalance(null);
+    }
+  }, [connected, account]);
+
+  const checkBalance = async (accountAddress) => {
+    try {
+      const resources = await aptos.getAccountResources({ accountAddress });
+      const aptosCoinResource = resources.find((r) => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>");
+      if (aptosCoinResource) {
+        setBalance(aptosCoinResource.data.coin.value);
+      }
+    } catch (error) {
+      console.error("Error checking balance:", error);
+    }
+  };
 
   const handleCoinValueChange = (e) => {
     const value = e.target.value;
     setCoinValue(value);
-    setSuiValue(value / 30000000);
+    setAptosValue(value / 30000000);
   };
 
-  const handleWithdrawal = async () => {
-    setShowTransfer(true);
-  };
+  const handleTopUp = async () => {
+    if (!connected || !account) {
+      alert("Please connect your wallet first!");
+      return;
+    }
 
-  const handleTransferComplete = async () => {
-    const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ deductedCoins: parseInt(coinValue, 10) }),
-    });
+    setTxnInProgress(true);
+    try {
+      const response = await signAndSubmitTransaction({
+        sender: account.address,
+        data: {
+          function: `${MODULE_ADDRESS}::${MODULE_NAME}::${CLAIM_FUNCTION_NAME}`,
+          functionArguments: [coinValue], 
+        },
+      });
 
-    if (response.ok) {
-      alert('Withdrawal successful!');
-      router.reload();  // Reload the page to update the balance
-    } else {
-      const result = await response.json();
-      alert(`Withdrawal failed: ${result.error}`);
+      console.log("Transaction submitted:", response);
+      
+      // Wait for transaction to be confirmed
+      await aptos.waitForTransaction({ transactionHash: response.hash });
+      
+      alert("Top-up successful! Check your balance.");
+      checkBalance(account.address);
+
+      // Update coin balance on the server
+      const serverResponse = await fetch('/api/updateCoinBalanceForTopUp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ addedCoins: parseInt(coinValue, 10) }),
+      });
+
+      if (serverResponse.ok) {
+        router.reload();  // Reload the page to update the balance
+      } else {
+        const result = await serverResponse.json();
+        alert(`Server update failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Error topping up:", error);
+      alert(`Error topping up: ${error.message || "Unknown error"}`);
+    } finally {
+      setTxnInProgress(false);
     }
   };
-
-  const handleLogin = (address) => {
-    setZkLoginUserAddress(address);
-  };
-
-  const router = useRouter();
 
   return (
     <>
@@ -53,13 +105,14 @@ const Withdrawal = () => {
       </Head>
       <div className="container">
         <FloatingBalance />
+        <WalletSelector />
         <div className="exchangeContainer">
           <div className="field">
             <img src="/coin.png" alt="Coin" className="icon" />
             <input
               type="range"
               min="3000"
-              max="100000" // Set an appropriate max value
+              max="100000"
               step="100"
               value={coinValue}
               onChange={handleCoinValueChange}
@@ -75,27 +128,36 @@ const Withdrawal = () => {
             />
           </div>
           <span className="arrow">→</span>
-          <div className="field sui">
-            <img src="/sui.png" alt="Sui" className="icon" />
+          <div className="field aptos">
+            <img src="/aptos.png" alt="Aptos" className="icon" />
             <input
               type="number"
-              value={suiValue}
+              value={aptosValue}
               readOnly
-              className="suiInput"
+              className="aptosInput"
             />
           </div>
         </div>
         <div className="rateAndButtons">
           <div className="rateContainer">
-            <div className="rate">Today's Rate<br />30000000 : 1 SUI</div>
+            <div className="rate">Today's Rate<br />30000000 : 1 APT</div>
             <div className="buttons">
-              <button className="confirmButton" onClick={handleWithdrawal}>Withdraw</button>
+              <button 
+                className="confirmButton" 
+                onClick={handleTopUp}
+                disabled={txnInProgress || !connected}
+              >
+                {txnInProgress ? 'Processing...' : 'Top Up'}
+              </button>
               <button className="cancelButton" onClick={() => router.back()}>Cancel</button>
             </div>
           </div>
         </div>
-        {showTransfer && zkLoginUserAddress && (
-          <TransferFunds userAddress={zkLoginUserAddress} suiValue={suiValue} onTransferComplete={handleTransferComplete} />
+        {connected && account && (
+          <div className="balanceInfo">
+            <p>Connected Address: {account.address}</p>
+            <p>Balance: {balance !== null ? `${balance/100000000} APT` : 'Loading...'}</p>
+          </div>
         )}
       </div>
       <style jsx>{`
@@ -104,7 +166,7 @@ const Withdrawal = () => {
           background-color: brown;
           background-size: cover;
           background-position: center;
-          height: 100vh;
+          min-height: 100vh;
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -139,17 +201,13 @@ const Withdrawal = () => {
           width: 300px;
           margin: 10px 0;
         }
-        .input {
+        .input, .aptosInput {
           width: 205px;
           padding: 3px 10px;
           font-size: 30px;
           text-align: center;
         }
-        .suiInput {
-          width: 205px;
-          padding: 5px;
-          font-size: 30px;
-          text-align: center;
+        .aptosInput {
           border: none;
           background: transparent;
         }
@@ -196,9 +254,19 @@ const Withdrawal = () => {
           background-color: green;
           color: white;
         }
+        .confirmButton:disabled {
+          background-color: gray;
+          cursor: not-allowed;
+        }
         .cancelButton {
           background-color: red;
           color: white;
+        }
+        .balanceInfo {
+          background-color: rgba(255, 255, 255, 0.8);
+          padding: 10px;
+          border-radius: 5px;
+          margin-top: 20px;
         }
       `}</style>
     </>

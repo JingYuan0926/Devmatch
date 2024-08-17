@@ -6,8 +6,13 @@ const CharacterSelection = () => {
   const router = useRouter();
 
   const handleCharacterSelect = (character) => {
-    // Pass the selected character as a query parameter and navigate to the create wallet page
-    router.push(`/createWallet?character=${character}`);
+    if (character === 'character1') {
+      // Redirect to localhost:3000/createWallet
+      window.location.href = 'http://localhost:3000/createWallet';
+    } else if (character === 'character2') {
+      // Redirect to localhost:3001/createWallet
+      window.location.href = 'http://localhost:3001/createWallet';
+    }
   };
 
   return (
@@ -21,11 +26,11 @@ const CharacterSelection = () => {
         <h1 className="title">Choose Your Character</h1>
         <div className="character-selection">
           <div className="character" onClick={() => handleCharacterSelect('character1')}>
-            <Image src="/csy.gif" alt="Character 1" width={400} height={400} className="character-image" />
+            <Image src="/maschaing.gif" alt="Character 1" width={400} height={400} className="character-image" />
             <p className="character-name">Character 1</p>
           </div>
           <div className="character" onClick={() => handleCharacterSelect('character2')}>
-            <Image src="/csy.gif" alt="Character 2" width={400} height={400} className="character-image" />
+            <Image src="/aptosg.gif" alt="Character 2" width={400} height={400} className="character-image" />
             <p className="character-name">Character 2</p>
           </div>
         </div>

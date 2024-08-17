@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import MintNFT from '../components/MintNFT';
 
 const Shop = () => {
   const [cars, setCars] = useState([]);

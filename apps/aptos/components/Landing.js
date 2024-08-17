@@ -1,4 +1,6 @@
 import Head from 'next/head';
+//import FloatingLoginButton from '../components/FloatingLoginButton'; // Import the FloatingLoginButton component
+
 import StartGameButton from '../components/StartGame'; // Import the StartGameButton component
 import Image from 'next/image';
 

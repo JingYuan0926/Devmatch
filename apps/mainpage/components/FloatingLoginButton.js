@@ -10,6 +10,7 @@ export default function CreateWalletComponent() {
   const [balance, setBalance] = useState(null);
 
   const CONTRACT_ADDRESS = "0x0FFC18b6C7F8a3F204D2c39843Ea8d5C87F4CC61";
+  const API_URL = "https://service-testnet.maschain.com"; // Replace with the actual base URL if different
 
   useEffect(() => {
     const savedWalletAddress = localStorage.getItem("walletAddress");
@@ -30,10 +31,10 @@ export default function CreateWalletComponent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = { name, email, ic, walletName };
-  
+
     try {
       const response = await fetch(
-        `https://service-testnet.maschain.com/api/wallet/create-user`,
+        `${API_URL}/api/wallet/create-user`,
         {
           method: "POST",
           headers: {
@@ -46,19 +47,19 @@ export default function CreateWalletComponent() {
           body: JSON.stringify(data),
         }
       );
-  
+
       if (!response.ok) {
         throw new Error("Failed to create user");
       }
-  
+
       const result = await response.json();
       const address = result.result.wallet.wallet_address;
-  
+
       localStorage.setItem("walletAddress", address);
       setWalletAddress(address);
       fetchBalance(address);
       closeModal();
-  
+
       // Save wallet name and address in the desired format
       await saveWalletNameAndAddressToFile(walletName, address);
     } catch (error) {
@@ -77,11 +78,11 @@ export default function CreateWalletComponent() {
         },
         body: JSON.stringify({ walletEntry }),
       });
-  
+
       if (!response.ok) {
         throw new Error("Failed to save wallet name and address to file");
       }
-  
+
       console.log("Wallet name and address saved to file successfully");
     } catch (error) {
       console.error("Error saving wallet name and address to file:", error);
@@ -95,41 +96,37 @@ export default function CreateWalletComponent() {
     setBalance(null);
   };
 
-  const API_URL = "https://service-testnet.maschain.com"; // Replace with the actual base URL if different
-
   const fetchBalance = async (address) => {
     try {
       const requestBody = {
         wallet_address: address,
         contract_address: CONTRACT_ADDRESS,
       };
-      console.log("Request body:", JSON.stringify(requestBody));
-  
+
       const response = await fetch(
         `${API_URL}/api/token/balance`,
         {
           method: "POST",
           headers: {
-            client_id: "fbe3e68b64bc94d69c8f630b32ae2815a1cc1c80daf69175e0a2f7f05dad6c9d",
-            client_secret: "sk_ab29a87ed862fd9cf3b2922c7779d9d6e4def9ce059f5380d0b928ddd8cd91a5",
+            client_id:
+              "fbe3e68b64bc94d69c8f630b32ae2815a1cc1c80daf69175e0a2f7f05dad6c9d",
+            client_secret:
+              "sk_ab29a87ed862fd9cf3b2922c7779d9d6e4def9ce059f5380d0b928ddd8cd91a5",
             "Content-Type": "application/json",
           },
           body: JSON.stringify(requestBody),
         }
       );
-  
-      console.log("Response status:", response.status);
+
       const responseText = await response.text();
-      console.log("Response body:", responseText);
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}, body: ${responseText}`);
       }
-  
+
       const result = JSON.parse(responseText);
-      
+
       if (result.status === 200) {
-        // Ensure that the balance is a number before applying toFixed
         const balanceValue = parseFloat(result.result);
         if (isNaN(balanceValue)) {
           throw new Error(`Balance is not a number: ${result.result}`);
@@ -143,7 +140,7 @@ export default function CreateWalletComponent() {
       alert("Error fetching balance: " + error.message);
     }
   };
-  
+
   return (
     <div className="wallet-container">
       {walletAddress ? (
@@ -155,10 +152,9 @@ export default function CreateWalletComponent() {
             <span className="full-address">Address: {walletAddress}</span>
             {balance !== null && <span className="balance">Balance: {balance} PEN</span>}
             <button onClick={handleLogout} className="logout-button">
-            Logout
-          </button>
+              Logout
+            </button>
           </div>
-          
         </div>
       ) : (
         <button onClick={openModal} className="create-wallet-button">

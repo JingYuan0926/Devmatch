@@ -1,11 +1,12 @@
 import FloatingBalance from '../components/FloatingBalance';
 import GamePlay from '../components/Game';
-import FloatingLoginButton from '../components/FloatingLoginButton'; // Import the FloatingLoginButton component
+import CreateWalletComponent from '../components/FloatingLoginButton';
+
 
 export default function Game() {
   return (
     <div>
-      <FloatingLoginButton />
+      <CreateWalletComponent />
       <FloatingBalance />
       <GamePlay />
     </div>
