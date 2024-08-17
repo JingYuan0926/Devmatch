@@ -94,7 +94,6 @@ const Withdrawal = () => {
 
   return (
     <div className="container">
-      <WalletSelector />
       <div className="exchangeContainer">
         <div className="field">
           <img src="/coin.png" alt="Coin" className="icon" />

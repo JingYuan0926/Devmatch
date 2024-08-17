@@ -1,110 +1,131 @@
 import {
-    APTOS_CONNECT_ACCOUNT_URL,
-    AboutAptosConnect,
-    AboutAptosConnectEducationScreen,
-    AptosPrivacyPolicy,
-    WalletItem,
-    groupAndSortWallets,
-    isAptosConnectWallet,
-    isInstallRequired,
-    truncateAddress,
-    useWallet,
-  } from "@aptos-labs/wallet-adapter-react";
-  import { ArrowLeft, ArrowRight, ChevronDown, Copy, LogOut, User } from "lucide-react";
-  import { useCallback, useState } from "react";
-  // Internal components
-  import { Button } from "@/components/ui/button";
-  import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-  import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-  } from "@/components/ui/dropdown-menu";
-  import { useToast } from "@/components/ui/use-toast";
-  
-  export function WalletSelector() {
-    const { account, connected, disconnect, wallet } = useWallet();
-    const { toast } = useToast();
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
-    const closeDialog = useCallback(() => setIsDialogOpen(false), []);
-  
-    const copyAddress = useCallback(async () => {
-      if (!account?.address) return;
-      try {
-        await navigator.clipboard.writeText(account.address);
-        toast({
-          title: "Success",
-          description: "Copied wallet address to clipboard.",
-        });
-      } catch {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to copy wallet address.",
-        });
+  APTOS_CONNECT_ACCOUNT_URL,
+  AboutAptosConnect,
+  AboutAptosConnectEducationScreen,
+  AptosPrivacyPolicy,
+  WalletItem,
+  groupAndSortWallets,
+  isAptosConnectWallet,
+  isInstallRequired,
+  truncateAddress,
+  useWallet,
+} from "@aptos-labs/wallet-adapter-react";
+import { ArrowLeft, ArrowRight, ChevronDown, Copy, LogOut, User } from "lucide-react";
+import { useCallback, useState, useEffect } from "react";
+// Internal components
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/components/ui/use-toast";
+
+export function WalletSelector() {
+  const { account, connected, disconnect, wallet, connect, wallets } = useWallet();
+  const { toast } = useToast();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const savedWalletName = localStorage.getItem('connectedWalletName');
+    if (savedWalletName && !connected) {
+      const savedWallet = wallets.find(w => w.name === savedWalletName);
+      if (savedWallet) {
+        connect(savedWallet.name);
       }
-    }, [account?.address, toast]);
-  
-    return connected ? (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button>{account?.ansName || truncateAddress(account?.address) || "Unknown"}</Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={copyAddress} className="gap-2">
-            <Copy className="h-4 w-4" /> Copy address
+    }
+  }, [connect, connected, wallets]);
+
+  const closeDialog = useCallback(() => setIsDialogOpen(false), []);
+
+  const copyAddress = useCallback(async () => {
+    if (!account?.address) return;
+    try {
+      await navigator.clipboard.writeText(account.address);
+      toast({
+        title: "Success",
+        description: "Copied wallet address to clipboard.",
+      });
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to copy wallet address.",
+      });
+    }
+  }, [account?.address, toast]);
+
+  const handleDisconnect = useCallback(() => {
+    disconnect();
+    localStorage.removeItem('connectedWalletName');
+  }, [disconnect]);
+
+  const handleConnect = useCallback((walletName) => {
+    connect(walletName);
+    localStorage.setItem('connectedWalletName', walletName);
+    closeDialog();
+  }, [connect, closeDialog]);
+
+  return connected ? (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button>{account?.ansName || truncateAddress(account?.address) || "Unknown"}</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={copyAddress} className="gap-2">
+          <Copy className="h-4 w-4" /> Copy address
+        </DropdownMenuItem>
+        {wallet && isAptosConnectWallet(wallet) && (
+          <DropdownMenuItem asChild>
+            <a href={APTOS_CONNECT_ACCOUNT_URL} target="_blank" rel="noopener noreferrer" className="flex gap-2">
+              <User className="h-4 w-4" /> Account
+            </a>
           </DropdownMenuItem>
-          {wallet && isAptosConnectWallet(wallet) && (
-            <DropdownMenuItem asChild>
-              <a href={APTOS_CONNECT_ACCOUNT_URL} target="_blank" rel="noopener noreferrer" className="flex gap-2">
-                <User className="h-4 w-4" /> Account
-              </a>
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem onSelect={disconnect} className="gap-2">
-            <LogOut className="h-4 w-4" /> Disconnect
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ) : (
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button>Connect a Wallet</Button>
-        </DialogTrigger>
-        <ConnectWalletDialog close={closeDialog} />
-      </Dialog>
-    );
-  }
-  
-  function ConnectWalletDialog({ close }) {
-    const { wallets = [] } = useWallet();
-    const { aptosConnectWallets, availableWallets, installableWallets } = groupAndSortWallets(wallets);
-  
-    const hasAptosConnectWallets = !!aptosConnectWallets.length;
-  
-    return (
-      <DialogContent className="max-h-screen overflow-auto">
-        <AboutAptosConnect renderEducationScreen={renderEducationScreen}>
-          <DialogHeader>
-            <DialogTitle className="flex flex-col text-center leading-snug">
-              {hasAptosConnectWallets ? (
-                <>
-                  <span>Log in or sign up</span>
-                  <span>with Social + Aptos Connect</span>
-                </>
-              ) : (
-                "Connect Wallet"
-              )}
-            </DialogTitle>
-          </DialogHeader>
-  
-          {hasAptosConnectWallets && (
-            <div className="flex flex-col gap-2 pt-3">
-              {aptosConnectWallets.map((wallet) => (
-                <AptosConnectWalletRow key={wallet.name} wallet={wallet} onConnect={close} />
+        )}
+        <DropdownMenuItem onSelect={handleDisconnect} className="gap-2">
+          <LogOut className="h-4 w-4" /> Disconnect
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  ) : (
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <DialogTrigger asChild>
+        <Button>Connect a Wallet</Button>
+      </DialogTrigger>
+      <ConnectWalletDialog close={closeDialog} onConnect={handleConnect} />
+    </Dialog>
+  );
+}
+
+function ConnectWalletDialog({ close, onConnect }) {
+  const { wallets = [] } = useWallet();
+  const { aptosConnectWallets, availableWallets, installableWallets } = groupAndSortWallets(wallets);
+
+  const hasAptosConnectWallets = !!aptosConnectWallets.length;
+
+  return (
+    <DialogContent className="max-h-screen overflow-auto">
+      <AboutAptosConnect renderEducationScreen={renderEducationScreen}>
+        <DialogHeader>
+          <DialogTitle className="flex flex-col text-center leading-snug">
+            {hasAptosConnectWallets ? (
+              <>
+                <span>Log in or sign up</span>
+                <span>with Social + Aptos Connect</span>
+              </>
+            ) : (
+              "Connect Wallet"
+            )}
+          </DialogTitle>
+        </DialogHeader>
+
+        {hasAptosConnectWallets && (
+          <div className="flex flex-col gap-2 pt-3">
+            {aptosConnectWallets.map((wallet) => (
+              <AptosConnectWalletRow key={wallet.name} wallet={wallet} onConnect={() => onConnect(wallet.name)} />
               ))}
               <p className="flex gap-1 justify-center items-center text-muted-foreground text-sm">
                 Learn more about{" "}
@@ -128,29 +149,29 @@ import {
             </div>
           )}
   
-          <div className="flex flex-col gap-3 pt-3">
-            {availableWallets.map((wallet) => (
-              <WalletRow key={wallet.name} wallet={wallet} onConnect={close} />
-            ))}
-            {!!installableWallets.length && (
-              <Collapsible className="flex flex-col gap-3">
-                <CollapsibleTrigger asChild>
-                  <Button size="sm" variant="ghost" className="gap-2">
-                    More wallets <ChevronDown />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="flex flex-col gap-3">
-                  {installableWallets.map((wallet) => (
-                    <WalletRow key={wallet.name} wallet={wallet} onConnect={close} />
-                  ))}
-                </CollapsibleContent>
-              </Collapsible>
-            )}
-          </div>
-        </AboutAptosConnect>
-      </DialogContent>
-    );
-  }
+  <div className="flex flex-col gap-3 pt-3">
+          {availableWallets.map((wallet) => (
+            <WalletRow key={wallet.name} wallet={wallet} onConnect={() => onConnect(wallet.name)} />
+          ))}
+          {!!installableWallets.length && (
+            <Collapsible className="flex flex-col gap-3">
+              <CollapsibleTrigger asChild>
+                <Button size="sm" variant="ghost" className="gap-2">
+                  More wallets <ChevronDown />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="flex flex-col gap-3">
+                {installableWallets.map((wallet) => (
+                  <WalletRow key={wallet.name} wallet={wallet} onConnect={() => onConnect(wallet.name)} />
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+        </div>
+      </AboutAptosConnect>
+    </DialogContent>
+  );
+}
   
   function WalletRow({ wallet, onConnect }) {
     return (
