@@ -14,7 +14,6 @@ const LandingPage = () => {
       </Head>
       <main className="main">
         <div className="buttons">
-          {/* <FloatingLoginButton /> */}
           <StartGameButton /> 
         </div>
         <div className="logo-container">
