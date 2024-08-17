@@ -1,5 +1,5 @@
 import StartGameButton from '../components/StartGame1';
-import CreateWallet from '../components/CreateWallet';
+import CreateWalletComponent from '../components/FloatingLoginButton';
 
 import Image from 'next/image';
 
@@ -7,7 +7,7 @@ export default function CreateWalletPage() {
   return (
     <div className="container">
       <div className="modal-container">
-        <CreateWallet />
+        <CreateWalletComponent />
         <StartGameButton/>
       </div>
       <div className="character-container">
