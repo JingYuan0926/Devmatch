@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { Aptos, AptosConfig, Network, Account } from "@aptos-labs/ts-sdk";
-import { WalletSelector } from "./WalletSelector";
 import { Gift } from 'lucide-react';
 
 const APTOS_NETWORK = Network.DEVNET;
@@ -154,7 +153,7 @@ export function Bounty() {
           <button 
             onClick={handleClaim}
             disabled={isClaiming || !canClaim || isSpinning}
-            className={`mt-10 ml-5 bg-blue-500 hover:bg-blue-700 text-white font-bold p-4 rounded-full ${(!canClaim || isClaiming || isSpinning) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`mt-10 ml-5 z-0 bg-blue-500 hover:bg-blue-700 text-white font-bold p-4 rounded-full ${(!canClaim || isClaiming || isSpinning) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isSpinning ? (
               <span className="animate-spin">🔄</span>
