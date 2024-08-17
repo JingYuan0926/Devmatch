@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { WalletSelector } from "../components/WalletSelector";
@@ -24,7 +24,7 @@ const Withdrawal = () => {
     setCoinValue(Math.floor(value / 0.0001 * 1000));
   };
 
-  const handleWithdraw = async () => {
+  const handleWithdraw = useCallback(async () => {
     if (!connected || !account) {
       alert("Please connect your wallet first!");
       return;
@@ -36,7 +36,7 @@ const Withdrawal = () => {
         data: {
           function: `${ABI.address}::${ABI.name}::claim`,
           typeArguments: [],
-          arguments: [Math.floor(aptosValue * 100000000)],
+          functionArguments: [Math.floor(aptosValue * 100000000)],
         },
       });
   
@@ -53,7 +53,7 @@ const Withdrawal = () => {
       setTxnInProgress(false);
     }
   }, [connected, account, signAndSubmitTransaction, aptosValue, coinValue]);
-
+  
 
   // const handleTransferComplete = async () => {
   //   const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
