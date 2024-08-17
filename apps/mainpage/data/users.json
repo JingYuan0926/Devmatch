@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "name": "User1",
+    "purchasedCars": [
+      {
+        "id": 1,
+        "name": "Mc Laren",
+        "price": 1200,
+        "imageUrl": "/mclaren.png",
+        "available": false
+      },
+      {
+        "id": 2,
+        "name": "Lamborghini",
+        "price": 1200,
+        "imageUrl": "/lamborghini.png",
+        "available": false
+      }
+    ]
+  }
+]
