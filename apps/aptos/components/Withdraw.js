@@ -30,10 +30,13 @@ const Withdrawal = () => {
       alert("Please connect your wallet first!");
       return;
     }
+  
+    // Show transfer UI or any other state change you want before the transaction starts
     setShowTransfer(true);
-  };
-
+  
+    // Indicate that the transaction is in progress
     setTxnInProgress(true);
+  
     try {
       const response = await signAndSubmitTransaction({
         sender: account.address,
@@ -43,18 +46,21 @@ const Withdrawal = () => {
           functionArguments: [Math.floor(aptosValue * 100000000)],
         },
       });
-
+  
       console.log("Transaction submitted:", response);
       alert("Withdrawal successful! Check your wallet balance.");
+  
+      // Update in-game balance after successful transaction
       setInGameBalance(prevBalance => prevBalance - coinValue);
     } catch (error) {
       console.error("Error withdrawing:", error);
       alert(`Error withdrawing: ${error.message || "Unknown error"}`);
     } finally {
+      // Reset the transaction progress state
       setTxnInProgress(false);
     }
   }, [connected, account, signAndSubmitTransaction, aptosValue, coinValue]);
-
+  
 
   // const handleTransferComplete = async () => {
   //   const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
