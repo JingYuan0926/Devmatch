@@ -12,6 +12,7 @@ export default function handler(req, res) {
         res.status(500).json({ error: 'Failed to read the coin balance' });
         return;
       }
+      
       const currentBalance = parseInt(data, 10);
       const newBalance = currentBalance + additionalCoins;
 
