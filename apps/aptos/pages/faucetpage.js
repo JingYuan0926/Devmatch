@@ -4,8 +4,8 @@ import { WalletSelector } from "../components/WalletSelector";
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 
 const APTOS_NETWORK = Network.DEVNET;
-const MODULE_ADDRESS = "0xee870cf134dfd104150cad571d58315e67a8e36a51a16369a369b2d51a045b98";
-const MODULE_NAME = "faucet";
+const MODULE_ADDRESS = "0xee870cf0134dfd104150cad571d58315e67a8e36a51a16369a369b2d51a045b98";
+const MODULE_NAME = "faucet1";
 const CLAIM_FUNCTION_NAME = "claim";
 const CONTRIBUTE_FUNCTION_NAME = "contribute";
 
@@ -49,7 +49,7 @@ export default function FaucetPage() {
         sender: account.address,
         data: {
           function: `${MODULE_ADDRESS}::${MODULE_NAME}::${functionName}`,
-          functionArguments: [],
+          functionArguments: [1000000], 
         },
       });
 
@@ -87,14 +87,14 @@ export default function FaucetPage() {
               disabled={txnInProgress}
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             >
-              {txnInProgress ? 'Processing...' : 'Claim 0.1 APT'}
+              {txnInProgress ? 'Processing...' : 'Claim 0.01 APT'}
             </button>
             <button 
               onClick={handleContribute}
               disabled={txnInProgress}
               className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
             >
-              {txnInProgress ? 'Processing...' : 'Contribute 0.1 APT'}
+              {txnInProgress ? 'Processing...' : 'Contribute 0.01 APT'}
             </button>
           </div>
         </div>

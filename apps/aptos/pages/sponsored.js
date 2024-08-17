@@ -5,7 +5,7 @@ import { Aptos, AptosConfig, Network, Account } from "@aptos-labs/ts-sdk";
 
 const APTOS_NETWORK = Network.DEVNET;
 const MODULE_ADDRESS = "0xee870cf134dfd104150cad571d58315e67a8e36a51a16369a369b2d51a045b98";
-const MODULE_NAME = "faucet";
+const MODULE_NAME = "faucet1";
 const CLAIM_FUNCTION_NAME = "claim";
 const SPONSOR_ADDRESS = "0x7bda16775910109bd87aef69fcb4cdeb8c3defbfd51332fd025252f7b2172aa3";
 
@@ -51,7 +51,7 @@ export default function SponsoredFaucetPage() {
         withFeePayer: true,
         data: {
           function: `${MODULE_ADDRESS}::${MODULE_NAME}::${CLAIM_FUNCTION_NAME}`,
-          functionArguments: [],
+          functionArguments: [1000000],
         },
       });
 
@@ -106,7 +106,7 @@ export default function SponsoredFaucetPage() {
             disabled={txnInProgress}
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
-            {txnInProgress ? 'Processing...' : 'Claim 0.1 APT (Sponsored)'}
+            {txnInProgress ? 'Processing...' : 'Claim 0.01 APT (Sponsored)'}
           </button>
         </div>
       ) : (
