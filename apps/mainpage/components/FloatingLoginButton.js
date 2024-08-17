@@ -10,6 +10,7 @@ export default function CreateWalletComponent() {
   const [balance, setBalance] = useState(null);
 
   const CONTRACT_ADDRESS = "0x0FFC18b6C7F8a3F204D2c39843Ea8d5C87F4CC61";
+  const API_URL = "https://service-testnet.maschain.com"; // Replace with the actual base URL if different
 
   useEffect(() => {
     const savedWalletAddress = localStorage.getItem("walletAddress");
