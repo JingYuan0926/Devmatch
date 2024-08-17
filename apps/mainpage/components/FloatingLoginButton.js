@@ -220,19 +220,23 @@ export default function CreateWalletComponent() {
 
       <style jsx>{`
         .wallet-container {
-          position: absolute;
-          top: 20px;
-          left: 20px;
-          z-index: 1000;
-        }
+         position: absolute;
+         top: 20px;
+         left: 20px;
+         z-index: 1000;
+       }
+
 
         .create-wallet-button {
+          margin-top: 380px;
+          margin-left: 300px;
           padding: 10px 20px;
           border-radius: 5px;
           background-color: #4caf50;
           color: white;
           cursor: pointer;
           transition: background-color 0.3s ease;
+          font-size: 33px;
         }
 
         .create-wallet-button:hover {

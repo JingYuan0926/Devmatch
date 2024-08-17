@@ -1,89 +1,160 @@
-// pages/shop.js
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-
+import MintNFT from '../components/MintNFT';
 
 const Shop = () => {
   const [cars, setCars] = useState([]);
   const [selectedCar, setSelectedCar] = useState(null);
-  const [purchasedCars, setPurchasedCars] = useState([]);
-  const [userId, setUserId] = useState(1);  // Assuming user ID is 1 for this example
   const [status, setStatus] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [walletAddress, setWalletAddress] = useState(null);
+  const [transactionHash, setTransactionHash] = useState('');
+  const [balance, setBalance] = useState(0); // Add balance state
   const router = useRouter();
 
+  // MasChain API configuration
+  const API_URL = 'https://service-testnet.maschain.com';
+  const CLIENT_ID = 'fbe3e68b64bc94d69c8f630b32ae2815a1cc1c80daf69175e0a2f7f05dad6c9d';
+  const CLIENT_SECRET = 'sk_ab29a87ed862fd9cf3b2922c7779d9d6e4def9ce059f5380d0b928ddd8cd91a5';
+
+  // Load the user's wallet address from local storage when the component mounts
+  useEffect(() => {
+    const savedAddress = localStorage.getItem("walletAddress");
+    if (savedAddress) {
+      setWalletAddress(savedAddress);
+    }
+  }, []);
+
+  // Log the wallet address to the console whenever it changes
+  useEffect(() => {
+    console.log("walletAddress updated:", walletAddress);
+  }, [walletAddress]);
+
+  // Fetch car data on component mount
   useEffect(() => {
     fetch('/api/getCars')
-      .then(response => response.json())
-      .then(data => {
+      .then((response) => response.json())
+      .then((data) => {
         setCars(data);
-        setSelectedCar(data.find(car => car.available));
+        setSelectedCar(data.find((car) => car.available));
       })
-      .catch(error => console.error('Error fetching car data:', error));
+      .catch((error) => console.error('Error fetching car data:', error));
+  }, []);
 
-    fetch(`/api/getUser?id=${userId}`)
-      .then(response => response.json())
-      .then(data => setPurchasedCars(data.purchasedCars))
-      .catch(error => console.error('Error fetching user data:', error));
-  }, [userId]);
+  const transferFunds = async (amount) => {
+    setStatus('Initiating fund transfer...');
+    console.log('Starting transfer process...');
+    console.log('User wallet address:', walletAddress); // Debug the wallet address
+
+    if (!walletAddress) {
+      setStatus('Error: Wallet address is missing.');
+      console.error('Error: Wallet address is missing.');
+      return;
+    }
+
+    try {
+      const requestBody = {
+        wallet_address: '0x8c066adf75902EC0De00F4B3B21d2b407EaF2C95', // Merchant wallet address
+        to: walletAddress, // User's wallet address
+        amount: amount.toString(),
+        contract_address: '0x0FFC18b6C7F8a3F204D2c39843Ea8d5C87F4CC61', // Token contract address
+        callback_url: 'https://your-callback-url.com/transfer-complete'
+      };
+
+      console.log('Transfer Request Body:', requestBody);
+
+      const response = await fetch(`${API_URL}/api/token/token-transfer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'client_id': CLIENT_ID,
+          'client_secret': CLIENT_SECRET,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('API Response Status:', response.status);
+      const result = await response.json();
+      console.log('API Response:', result);
+
+      if (response.ok && result.status === 200) {
+        const hash = result.result.transactionHash;
+        setTransactionHash(hash); // Set transaction hash here
+        setStatus(`Transfer initiated! Transaction hash: ${hash}`);
+        console.log('Transaction Hash:', hash);
+        return hash;
+      } else {
+        throw new Error(result.message || 'Transfer failed');
+      }
+    } catch (error) {
+      console.error('Transfer error:', error);
+      setStatus(`Transfer failed: ${error.message}`);
+      throw error;
+    }
+  };
 
   const handlePurchase = async () => {
     if (!selectedCar) {
       alert('No car selected.');
       return;
     }
-
-    const response = await fetch('/api/updatePurchase', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ carId: selectedCar.id, userId }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      setPurchasedCars(data.purchasedCars);
-
-      // Deduct the car price from the user's balance
-      await updateBalance(-selectedCar.price);
-
-
-      // Mint NFT for the user
-      const userAddress = localStorage.getItem('zkLoginUserAddress');
-      if (userAddress) {
-        await MintNFT(userAddress, setStatus, setIsLoading);
-      } else {
-        console.error('No zkLogin user address found.');
-      }
-
-      router.reload();  // Reload the page to update the car list
-    } else {
-      const result = await response.json();
-      alert(`Purchase failed: ${result.error}`);
+  
+    if (!walletAddress) {
+      alert('No wallet address found. Please connect your wallet.');
+      return;
     }
-  };
-
-  const updateBalance = async (amount) => {
+  
+    setIsLoading(true);
+    setStatus('Processing purchase...');
+  
     try {
-      const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
+      // Initiate fund transfer
+      const transferHash = await transferFunds(selectedCar.price);
+      setStatus(`Fund transfer initiated. Transaction hash: ${transferHash}`);
+      alert(`Fund transfer initiated. Transaction hash: ${transferHash}`);
+  
+      // Proceed with the purchase
+      const response = await fetch('/api/updatePurchase', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ deductedCoins: Math.abs(amount) }),
+        body: JSON.stringify({ carId: selectedCar.id, userId: 1, transactionHash: transferHash }),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to update balance: ${error.message}`);
-      }
+  
+      if (response.ok) {
+        const data = await response.json();
+        setStatus('Purchase successful. Initiating NFT minting...');
+  
+        // Mint NFT for the user
+        const contractAddress = '0xfdD7B3c255089Fc6E4883c292Ae2487475185d19'; // Replace with your actual contract address
+        const mintingResult = await MintNFT(walletAddress, selectedCar, contractAddress, setStatus, setIsLoading);
+        console.log('Minting Result:', mintingResult);
+  
+        if (mintingResult && mintingResult.transactionHash) {
+          setTransactionHash(mintingResult.transactionHash);
+          setStatus(`NFT minted successfully! Minting transaction hash: ${mintingResult.transactionHash}`);
+          alert(`NFT minted successfully! Minting transaction hash: ${mintingResult.transactionHash}`);
+  
+          // Update the coin balance
+          await handleBalanceUpdate();
+  
+          alert('Purchase and NFT minting successful!');
+          router.reload(); // Refresh the page after the user acknowledges the alert
+        } else {
+          alert('NFT minting completed, but no transaction hash was returned.');
+        }
+      } 
     } catch (error) {
-      console.error('Error updating balance:', error);
+      //use fs to extract the balance inside coins.txt and minus the price of the car
+      router.reload();
+    } finally {
+      setIsLoading(false);
     }
   };
 
+ 
   return (
     <>
       <Head>
@@ -178,7 +249,7 @@ const Shop = () => {
         }
 
         .car-item:hover {
-          background-color: #f0e68c; /* Light Khaki for hover effect */
+          background-color: #f0e68c;
         }
 
         .car-item:nth-child(even):hover {
@@ -202,6 +273,20 @@ const Shop = () => {
           cursor: not-allowed;
           color: red;
         }
+
+        .status-message {
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: rgba(0, 0, 0, 0.7);
+          color: white;
+          padding: 10px 20px;
+          border-radius: 5px;
+          font-family: 'Pixelify Sans', sans-serif;
+          font-size: 18px;
+          z-index: 1000;
+        }
       `}</style>
       <div className="shop-container">
         <div className="car-image-container">
@@ -212,7 +297,9 @@ const Shop = () => {
                 alt={selectedCar.name}
                 className="car-image"
               />
-              <button className="purchase-button" onClick={handlePurchase}>Purchase</button>
+              <button className="purchase-button" onClick={handlePurchase} disabled={isLoading}>
+                {isLoading ? 'Processing...' : 'Purchase'}
+              </button>
               <div className="message">
                 Make your favourite car in your collection...
               </div>
@@ -238,7 +325,12 @@ const Shop = () => {
           ))}
         </div>
       </div>
-      {status && <p>{status}</p>}
+      {status && <div className="status-message">{status}</div>}
+      {transactionHash && (
+        <div className="status-message">
+          Transaction Hash: {transactionHash}
+        </div>
+      )}
     </>
   );
 };
