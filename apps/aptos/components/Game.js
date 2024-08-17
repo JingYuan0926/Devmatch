@@ -139,8 +139,6 @@ const GamePlay = () => {
 
   return (
     <div className="gameContainer">
-<<<<<<< HEAD
-=======
       <div className="walletSelectorWrapper" style={{
         position: 'absolute',
         left: "200px",
@@ -149,7 +147,6 @@ const GamePlay = () => {
       }}>
         <WalletSelector />
       </div>
->>>>>>> 4842e63a416d6f82d7c62d517d35c96753ca10d2
       <div className="mapWrapper">
         <div className="mapContainer">
           <Image src="/assets/map.png" alt="Map" layout="fill" />
