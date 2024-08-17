@@ -9,14 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@thirdweb-dev/sdk": "^4.0.99",
     "axios": "^1.7.4",
+    "dotenv": "^16.4.5",
+    "ethers": "^5.7.2",
     "fs": "^0.0.1-security",
     "next": "14.2.5",
     "path": "^0.12.7",
-    "dotenv": "^16.4.5",
-    "next": "14.2.5",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "solc": "^0.8.26"
   },
   "devDependencies": {
     "eslint": "^8",
