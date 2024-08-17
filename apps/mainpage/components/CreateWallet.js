@@ -231,7 +231,7 @@ export default function CreateWalletComponent() {
          color: white;
          cursor: pointer;
          transition: background-color 0.3s ease;
-         margin-top: 350px;
+         margin-top: 100px;
          margin-left: 300px;
        }
 
@@ -255,7 +255,7 @@ export default function CreateWalletComponent() {
          height: 60px;
          transition: all 0.3s ease;
          box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-         margin-top: 350px;
+         margin-top: 100px;
          margin-left: 300px;
        }
 

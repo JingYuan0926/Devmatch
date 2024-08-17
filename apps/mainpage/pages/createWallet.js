@@ -8,8 +8,7 @@ export default function CreateWalletPage() {
     <div className="container">
       <div className="modal-container">
         <CreateWallet />
-        <StartGameButton
-         />
+        <StartGameButton/>
       </div>
       <div className="character-container">
         <Image src="/csy.gif" alt="Character" width={400} height={400} />

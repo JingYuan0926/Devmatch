@@ -21,11 +21,11 @@ const CharacterSelection = () => {
         <h1 className="title">Choose Your Character</h1>
         <div className="character-selection">
           <div className="character" onClick={() => handleCharacterSelect('character1')}>
-            <Image src="/csy.gif" alt="Character 1" width={400} height={400} className="character-image" />
+            <Image src="/maschaing.gif" alt="Character 1" width={400} height={400} className="character-image" />
             <p className="character-name">Character 1</p>
           </div>
           <div className="character" onClick={() => handleCharacterSelect('character2')}>
-            <Image src="/csy.gif" alt="Character 2" width={400} height={400} className="character-image" />
+            <Image src="/aptosg.gif" alt="Character 2" width={400} height={400} className="character-image" />
             <p className="character-name">Character 2</p>
           </div>
         </div>
