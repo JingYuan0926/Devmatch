@@ -29,7 +29,7 @@ export const WalletProvider = ({ children }) => {
       plugins={wallets}
       autoConnect={autoConnect}
       dappConfig={{
-        network: Network.TESTNET,
+        network: Network.DEVNET,
         aptosConnectDappId: "57fa42a9-29c6-4f1e-939c-4eefa36d9ff5",
         mizuwallet: {
           manifestURL:

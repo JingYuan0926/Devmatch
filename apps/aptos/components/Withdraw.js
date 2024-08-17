@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import FloatingBalance from '../components/FloatingBalance';
-import FloatingLoginButton from '../components/FloatingLoginButton';
-import TransferFunds from '../components/TransferFund'; // Import the TransferFunds component
+import FloatingBalance from '../components/FloatingBalance'; // Import the TransferFunds component
 
 const Withdrawal = () => {
   const [coinValue, setCoinValue] = useState(3000);
@@ -54,7 +52,6 @@ const Withdrawal = () => {
       </Head>
       <div className="container">
         <FloatingBalance />
-        <FloatingLoginButton onLogin={handleLogin} />
         <div className="exchangeContainer">
           <div className="field">
             <img src="/coin.png" alt="Coin" className="icon" />
