@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Head from 'next/head';
 import { useRouter } from 'next/router';
 import FloatingBalance from '../components/FloatingBalance';
 import TransferFunds from '../components/TransferFunds'; // Import the TransferFunds component
@@ -16,18 +15,51 @@ const Withdrawal = () => {
     setSuiValue(value / 30000000);
   };
 
-  const handleWithdrawal = async () => {
+  const handleWithdraw = async () => {
+    if (!connected || !account) {
+      alert("Please connect your wallet first!");
+      return;
+    }
+  
+    // Show transfer UI or any other state change you want before the transaction starts
     setShowTransfer(true);
-  };
+  
+    // Indicate that the transaction is in progress
+    setTxnInProgress(true);
+  
+    try {
+      const response = await signAndSubmitTransaction({
+        sender: account.address,
+        data: {
+          function: `${ABI.address}::${ABI.name}::claim`,
+          typeArguments: [],
+          arguments: [Math.floor(aptosValue * 100000000)],
+        },
+      });
+  
+      console.log("Transaction submitted:", response);
+      alert("Withdrawal successful! Check your wallet balance.");
+  
+      // Update in-game balance after successful transaction
+      setInGameBalance(prevBalance => prevBalance - coinValue);
+    } catch (error) {
+      console.error("Error withdrawing:", error);
+      alert(`Error withdrawing: ${error.message || "Unknown error"}`);
+    } finally {
+      // Reset the transaction progress state
+      setTxnInProgress(false);
+    }
+  }, [connected, account, signAndSubmitTransaction, aptosValue, coinValue]);
 
-  const handleTransferComplete = async () => {
-    const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ deductedCoins: parseInt(coinValue, 10) }),
-    });
+
+  // const handleTransferComplete = async () => {
+  //   const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({ deductedCoins: parseInt(coinValue, 10) }),
+  //   });
 
     if (response.ok) {
       alert('Withdrawal successful!');
