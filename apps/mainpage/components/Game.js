@@ -57,27 +57,27 @@ const GamePlay = () => {
     switch (e.key) {
       case 'w':
       case 'W':
-        newPos.y -= 20;
+        newPos.y -= 30;
         setSprite('W.gif');
         setDirection('W');
-        newMapPos.y += 20 * scale;
+        newMapPos.y += 30 * scale;
         break;
       case 'a':
       case 'A':
-        newPos.x -= 20;
+        newPos.x -= 30;
         setSprite('A.gif');
         setDirection('A');
         break;
       case 's':
       case 'S':
-        newPos.y += 20;
+        newPos.y += 30;
         setSprite('S.gif');
         setDirection('S');
-        newMapPos.y -= 20 * scale;
+        newMapPos.y -= 30 * scale;
         break;
       case 'd':
       case 'D':
-        newPos.x += 20;
+        newPos.x += 30;
         setSprite('D.gif');
         setDirection('D');
         break;

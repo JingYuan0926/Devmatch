@@ -10,7 +10,7 @@ export default function CreateWalletPage() {
         <StartGameButton/>
       </div>
       <div className="character-container">
-        <Image src="/csy.gif" alt="Character" width={400} height={400} />
+        <Image src="/aptosg.gif" alt="Character" width={400} height={400} />
       </div>
 
       <style jsx>{`
@@ -18,8 +18,8 @@ export default function CreateWalletPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          height: 92.5vh;
-          width: 96vw;
+          height: 100vh;
+          width: 100%;
           background-image: url('/background3.jpeg');
           background-size: cover;
           background-position: center;

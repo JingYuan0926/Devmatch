@@ -152,7 +152,7 @@ const Withdrawal = () => {
           background-color: brown;
           background-size: cover;
           background-position: center;
-          height: 100vh;
+          height: 110vh;
           display: flex;
           flex-direction: column;
           justify-content: center;
