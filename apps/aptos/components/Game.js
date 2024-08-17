@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { useRouter } from 'next/router';
 import { WalletSelector } from "./WalletSelector";
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
@@ -28,14 +29,23 @@ const GamePlay = () => {
 
   // Function to check the user's balance
   const checkBalance = async (accountAddress) => {
-    console.log('Checking balance for address:', accountAddress);
-    const balanceResource = await sdk.getAccountResource({
-      accountAddress,
-      resourceType: COIN_STORE,
-    });
-    // console.log('Balance resource:', balanceResource);
-    const amount = Number(balanceResource.coin.value);
-    console.log(`User's balance is: ${amount} APT`);
+    try {
+      console.log('Checking balance for address:', accountAddress);
+      const balanceResource = await sdk.getAccountResource({
+        accountAddress,
+        resourceType: COIN_STORE,
+      });
+      const amount = Number(balanceResource.coin.value);
+      console.log(`User's balance is: ${amount} APT`);
+      setBalance(amount);
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        console.error('Resource not found, account may not have this resource');
+      } else {
+        console.error('An error occurred while fetching the balance:', error);
+      }
+      setBalance(0); // Assuming balance is 0 if resource is not found
+    }
   };
 
   useEffect(() => {
@@ -151,7 +161,7 @@ const GamePlay = () => {
         <div className="mapContainer">
           <Image src="/assets/map.png" alt="Map" layout="fill" />
           <div className="character">
-            <Image src={`/assets/${sprite}`} alt="Character" width={188} height={188} />
+            <Image src={`/assets/${sprite}`} alt="Character" width={888} height={288} />
           </div>
         </div>
       </div>

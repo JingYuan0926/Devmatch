@@ -6,8 +6,13 @@ const CharacterSelection = () => {
   const router = useRouter();
 
   const handleCharacterSelect = (character) => {
-    // Pass the selected character as a query parameter and navigate to the create wallet page
-    router.push(`/createWallet?character=${character}`);
+    if (character === 'character1') {
+      // Redirect to localhost:3000/createWallet
+      window.location.href = 'http://localhost:3000/createWallet';
+    } else if (character === 'character2') {
+      // Redirect to localhost:3001/createWallet
+      window.location.href = 'http://localhost:3001/createWallet';
+    }
   };
 
   return (
