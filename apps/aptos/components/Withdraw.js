@@ -30,6 +30,7 @@ const Withdrawal = () => {
       return;
     }
   
+    setTxnInProgress(true);
     try {
       const response = await signAndSubmitTransaction({
         sender: account.address,
@@ -41,15 +42,31 @@ const Withdrawal = () => {
       });
   
       console.log("Transaction submitted:", response);
-      alert("Withdrawal successful! Check your wallet balance.");
-  
-      // Update in-game balance after successful transaction
-      setInGameBalance(prevBalance => prevBalance - coinValue);
+      
+      // After successful wallet transaction, update the coin balance
+      const updateResponse = await fetch('/api/updateCoinBalanceForWithdrawal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ deductedCoins: coinValue }),
+      });
+
+      if (updateResponse.ok) {
+        const result = await updateResponse.json();
+        console.log(`Updated coin balance: ${result.balance}`);
+        alert("Withdrawal successful! Your in-game balance has been updated.");
+        setInGameBalance(result.balance);
+        router.reload();  // Reload the page to update the balance
+      } else {
+        const errorData = await updateResponse.json();
+        console.error("Failed to update coin balance:", errorData.error);
+        alert(`Withdrawal successful, but failed to update in-game balance: ${errorData.error}`);
+      }
     } catch (error) {
       console.error("Error withdrawing:", error);
       alert(`Error withdrawing: ${error.message || "Unknown error"}`);
     } finally {
-      // Reset the transaction progress state
       setTxnInProgress(false);
     }
   }, [connected, account, signAndSubmitTransaction, aptosValue, coinValue]);
