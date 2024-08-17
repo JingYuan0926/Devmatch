@@ -4,7 +4,7 @@ const StartGameButton = () => {
   const router = useRouter();
 
   const handleButtonClick = () => {
-    router.push('/game'); // Navigate to the game page
+    router.push('/CharacterSelection'); // Navigate to the game page
   };
 
   return (
