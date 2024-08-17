@@ -12,11 +12,14 @@ export default function handler(req, res) {
         res.status(500).json({ error: 'Failed to read the coin balance' });
         return;
       }
+      
       const currentBalance = parseInt(data, 10);
+      
       if (currentBalance < deductedCoins) {
         res.status(400).json({ error: 'Insufficient balance' });
         return;
       }
+      
       const newBalance = currentBalance - deductedCoins;
 
       fs.writeFile(filePath, newBalance.toString(), (err) => {
@@ -25,6 +28,7 @@ export default function handler(req, res) {
           res.status(500).json({ error: 'Failed to update the coin balance' });
           return;
         }
+        
         res.status(200).json({ balance: newBalance });
       });
     });

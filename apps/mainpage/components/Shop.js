@@ -109,12 +109,31 @@ const Shop = () => {
     setStatus('Processing purchase...');
   
     try {
-      // Initiate fund transfer
-      const transferHash = await transferFunds(selectedCar.price);
-      setStatus(`Fund transfer initiated. Transaction hash: ${transferHash}`);
-      alert(`Fund transfer initiated. Transaction hash: ${transferHash}`);
+      // Step 1: Deduct coins from the user's balance
+      const deductResponse = await deductCoins(selectedCar.price);
   
-      // Proceed with the purchase
+      if (!deductResponse) {
+        alert('Failed to deduct coins. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+  
+      setStatus('Coins deducted successfully. Initiating fund transfer...');
+  
+      // Step 2: Initiate fund transfer
+      const transferHash = await transferFunds(selectedCar.price);
+  
+      if (!transferHash) {
+        alert('Failed to initiate fund transfer. Coins will be refunded.');
+        // If transfer fails, you might want to refund the deducted coins here.
+        setIsLoading(false);
+        return;
+      }
+  
+      setStatus(`Certificate Minting Successful. Transaction hash: ${transferHash}`);
+      alert(`Certificate Minting Successful. Transaction hash: ${transferHash}`);
+  
+      // Step 3: Proceed with the purchase
       const response = await fetch('/api/updatePurchase', {
         method: 'POST',
         headers: {
@@ -127,7 +146,7 @@ const Shop = () => {
         const data = await response.json();
         setStatus('Purchase successful. Initiating NFT minting...');
   
-        // Mint NFT for the user
+        // Step 4: Mint NFT for the user
         const contractAddress = '0xfdD7B3c255089Fc6E4883c292Ae2487475185d19'; // Replace with your actual contract address
         const mintingResult = await MintNFT(walletAddress, selectedCar, contractAddress, setStatus, setIsLoading);
         console.log('Minting Result:', mintingResult);
@@ -137,23 +156,51 @@ const Shop = () => {
           setStatus(`NFT minted successfully! Minting transaction hash: ${mintingResult.transactionHash}`);
           alert(`NFT minted successfully! Minting transaction hash: ${mintingResult.transactionHash}`);
   
-          // Update the coin balance
-          await handleBalanceUpdate();
-  
           alert('Purchase and NFT minting successful!');
           router.reload(); // Refresh the page after the user acknowledges the alert
         } else {
           alert('NFT minting completed, but no transaction hash was returned.');
         }
-      } 
+      } else {
+        alert('Purchase failed after fund transfer. Coins will not be refunded.');
+      }
     } catch (error) {
-      //use fs to extract the balance inside coins.txt and minus the price of the car
       router.reload();
     } finally {
       setIsLoading(false);
     }
   };
-
+  
+  // Function to deduct coins from the user's balance
+  const deductCoins = async (amount) => {
+    try {
+      const response = await fetch('/api/updateCoinBalanceForPurchase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ deductedCoins: amount }),
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        setBalance(data.balance);
+        console.log('New balance:', data.balance);
+        alert(`Coins deducted successfully. New balance: ${data.balance}`);
+        return true; // Indicate success
+      } else {
+        const result = await response.json();
+        console.error('Error deducting coins:', result.error);
+        alert(`Failed to deduct coins: ${result.error}`);
+        return false; // Indicate failure
+      }
+    } catch (error) {
+      console.error('Error deducting coins:', error);
+      alert(`Failed to deduct coins: ${error.message}`);
+      return false; // Indicate failure
+    }
+  };
+  
  
   return (
     <>
