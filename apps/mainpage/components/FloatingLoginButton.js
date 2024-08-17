@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 
 export default function CreateWalletComponent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -9,8 +9,8 @@ export default function CreateWalletComponent() {
   const [walletAddress, setWalletAddress] = useState(null);
   const [balance, setBalance] = useState(null);
 
-  const CONTRACT_ADDRESS = "0x0FFC18b6C7F8a3F204D2c39843Ea8d5C87F4CC61";
-  const API_URL = "https://service-testnet.maschain.com"; // Replace with the actual base URL if different
+  const CONTRACT_ADDRESS = "0x9c56DE7ab3a785BDc070BEcc8ee8B882f4670A77";
+  const API_URL = "https://service-testnet.maschain.com";
 
   useEffect(() => {
     const savedWalletAddress = localStorage.getItem("walletAddress");
@@ -57,36 +57,72 @@ export default function CreateWalletComponent() {
 
       localStorage.setItem("walletAddress", address);
       setWalletAddress(address);
-      fetchBalance(address);
+      
+      // Fetch the PEN token balance
+      const penBalance = await fetchBalance(address);
+      
+      // Generate random in-game currency coins
+      const inGameCoins = Math.floor(Math.random() * (3500 - 2500 + 1)) + 2500;
+      
+      // Save all information to a single file
+      await saveWalletInfoToFile(name, address, inGameCoins, penBalance);
+      
       closeModal();
-
-      // Save wallet name and address in the desired format
-      await saveWalletNameAndAddressToFile(walletName, address);
     } catch (error) {
       console.error("Error creating user:", error);
       alert("Error creating user");
     }
   };
 
-  const saveWalletNameAndAddressToFile = async (walletName, address) => {
+  const fetchBalance = async (address) => {
     try {
-      const walletEntry = `${walletName},${address}`;
-      const response = await fetch("/api/save-wallet", {
+      const response = await fetch('/api/fetch-balance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ walletAddress: address }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch balance');
+      }
+
+      const data = await response.json();
+      const balanceValue = parseFloat(data.balance);
+      
+      if (isNaN(balanceValue)) {
+        throw new Error(`Balance is not a number: ${data.balance}`);
+      }
+      
+      setBalance(balanceValue.toFixed(8));
+      return balanceValue.toFixed(8);
+    } catch (error) {
+      console.error("Error fetching balance:", error.message);
+      alert("Error fetching balance: " + error.message);
+      return "0"; // Return "0" as a string if there's an error
+    }
+  };
+
+  const saveWalletInfoToFile = async (name, address, inGameCoins, penBalance) => {
+    try {
+      const walletInfo = `${name},${address},${inGameCoins},${penBalance}`;
+      const response = await fetch("/api/save-wallet-info", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ walletEntry }),
+        body: JSON.stringify({ walletInfo }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save wallet name and address to file");
+        throw new Error("Failed to save wallet information to file");
       }
 
-      console.log("Wallet name and address saved to file successfully");
+      console.log("Wallet information saved to file successfully");
     } catch (error) {
-      console.error("Error saving wallet name and address to file:", error);
-      alert("Error saving wallet name and address to file");
+      console.error("Error saving wallet information to file:", error);
+      alert("Error saving wallet information to file");
     }
   };
 
@@ -96,58 +132,13 @@ export default function CreateWalletComponent() {
     setBalance(null);
   };
 
-  const fetchBalance = async (address) => {
-    try {
-      const requestBody = {
-        wallet_address: address,
-        contract_address: CONTRACT_ADDRESS,
-      };
-
-      const response = await fetch(
-        `${API_URL}/api/token/balance`,
-        {
-          method: "POST",
-          headers: {
-            client_id:
-              "fbe3e68b64bc94d69c8f630b32ae2815a1cc1c80daf69175e0a2f7f05dad6c9d",
-            client_secret:
-              "sk_ab29a87ed862fd9cf3b2922c7779d9d6e4def9ce059f5380d0b928ddd8cd91a5",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
-
-      const responseText = await response.text();
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}, body: ${responseText}`);
-      }
-
-      const result = JSON.parse(responseText);
-
-      if (result.status === 200) {
-        const balanceValue = parseFloat(result.result);
-        if (isNaN(balanceValue)) {
-          throw new Error(`Balance is not a number: ${result.result}`);
-        }
-        setBalance(balanceValue.toFixed(8)); // Set balance with 8 decimal places
-      } else {
-        throw new Error(`Unexpected response format: ${JSON.stringify(result)}`);
-      }
-    } catch (error) {
-      console.error("Error fetching balance:", error.message);
-      alert("Error fetching balance: " + error.message);
-    }
-  };
-
   return (
     <div className="wallet-container">
       {walletAddress ? (
         <div className="wallet-info">
           <div className="wallet-address-box">
             <span className="truncated-address">
-              <img className="logo" src="/pen.png" alt="SUI Logo" width="50" height="50" />
+              <img className="logo" src="/pen.png" alt="PEN Logo" width="50" height="50" />
             </span>
             <span className="full-address">Address: {walletAddress}</span>
             {balance !== null && <span className="balance">Balance: {balance} PEN</span>}
@@ -216,12 +207,11 @@ export default function CreateWalletComponent() {
 
       <style jsx>{`
         .wallet-container {
-         position: absolute;
-         top: 20px;
-         left: 20px;
-         z-index: 1000;
-       }
-
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          z-index: 1000;
+        }
 
         .create-wallet-button {
           margin-top: 380px;
@@ -289,37 +279,33 @@ export default function CreateWalletComponent() {
           opacity: 0;
         }
 
-
         .wallet-info:hover .full-address {
           opacity: 1;
         }
 
         .logout-button {
-            position: absolute;
-            bottom: 10px; /* Position it within the expanded area */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40%;
-            padding: 10px;
-            border-radius: 5px;
-            background-color: #e53935;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            opacity: 0;
-            visibility: hidden;
-          }
-
+          position: absolute;
+          bottom: 10px; /* Position it within the expanded area */
+          left: 50%;
+          transform: translateX(-50%);
+          width: 40%;
+          padding: 10px;
+          border-radius: 5px;
+          background-color: #e53935;
+          color: white;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          opacity: 0;
+          visibility: hidden;
+        }
 
         .wallet-info:hover .logout-button {
           opacity: 1;
           visibility: visible;
-          
         }
 
         .logout-button:hover {
           background-color: #FFB3B3;
-          
         }
 
         .modal-overlay {
