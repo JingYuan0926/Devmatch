@@ -1,5 +1,5 @@
 import React from 'react';
-import Withdrawal from '../components/withdraw';
+import Withdrawal from '../components/Withdraw';
 import FloatingBalance from '../components/FloatingBalance';
 
 const BankPage = () => {

@@ -1,36 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { WalletSelector } from "../components/WalletSelector";
+import { ABI } from "../utils/abi";
 import FloatingBalance from '../components/FloatingBalance';
 
 const TopUp = () => {
-  const [coinValue, setCoinValue] = useState(0);
-  const [suiValue, setSuiValue] = useState('');
-
-  const handleSuiValueChange = (e) => {
-    const value = e.target.value;
-    setSuiValue(value);
-    setCoinValue(Math.floor(value * 30000000));
-  };
-
-  const handleTopUp = async () => {
-    const response = await fetch('/api/updateCoinBalance', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ additionalCoins: coinValue }),
-    });
-
-    if (response.ok) {
-      alert('Top Up successful!');
-      router.reload();  // Reload the page to update the balance
-    } else {
-      alert('Top Up failed. Please try again.');
-    }
-  };
-
+  const [aptosValue, setAptosValue] = useState(0.0001);
+  const [coinValue, setCoinValue] = useState(1000);
+  const [txnInProgress, setTxnInProgress] = useState(false);
   const router = useRouter();
+  const { connected, account, signAndSubmitTransaction } = useWallet();
+
+  const handleAptosValueChange = (e) => {
+    const value = parseFloat(e.target.value);
+    setAptosValue(value);
+    setCoinValue(Math.floor(value * 10000000));
+  };
+
+  const handleCoinValueChange = (e) => {
+    const value = parseInt(e.target.value);
+    setCoinValue(value);
+    setAptosValue((value / 10000000).toFixed(8));
+  };
+
+  const handleTopUp = useCallback(async () => {
+    if (!connected || !account) {
+      alert("Please connect your wallet first!");
+      return;
+    }
+
+    setTxnInProgress(true);
+    try {
+      const response = await signAndSubmitTransaction({
+        sender: account.address,
+        data: {
+          function: `${ABI.address}::${ABI.name}::contribute`,
+          typeArguments: [],
+          functionArguments: [Math.floor(aptosValue * 100000000)], // Convert to Octas
+        },
+      });
+
+      console.log("Transaction submitted:", response);
+      alert("Top-up successful! Check your in-game balance.");
+      console.log(`Added ${coinValue} to in-game balance`);
+    } catch (error) {
+      console.error("Error topping up:", error);
+      alert(`Error topping up: ${error.message || "Unknown error"}`);
+    } finally {
+      setTxnInProgress(false);
+    }
+  }, [connected, account, signAndSubmitTransaction, aptosValue, coinValue]);
+
+  // const handleTopUp = async () => {
+  //   const response = await fetch('/api/updateCoinBalance', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({ additionalCoins: coinValue }),
+  //   });
+
+  //   if (response.ok) {
+  //     alert('Top Up successful!');
+  //     router.reload();  // Reload the page to update the balance
+  //   } else {
+  //     alert('Top Up failed. Please try again.');
+  //   }
+  // };
+  //const router = useRouter();
+
+
+
+
 
   return (
     <>
@@ -41,41 +84,57 @@ const TopUp = () => {
       </Head>
       <div className="container">
         <FloatingBalance />
+        <WalletSelector />
         <div className="exchangeContainer">
-          <div className="field sui">
-            <img
-              src="/sui.png"
-              alt="Sui"
-              className="icon"
+          <div className="field aptos">
+            <img src="/aptos.png" alt="Aptos" className="icon" />
+            <input
+              type="range"
+              min="0.0001"
+              max="0.01"
+              step="0.0001"
+              value={aptosValue}
+              onChange={handleAptosValueChange}
+              className="slider"
             />
             <input
               type="number"
-              value={suiValue}
-              onChange={handleSuiValueChange}
-              className="suiInput"
+              value={aptosValue}
+              onChange={handleAptosValueChange}
+              className="aptosInput"
               placeholder="0"
+              min="0.0001"
+              max="0.01"
+              step="0.0001"
             />
           </div>
           <span className="arrow">→</span>
           <div className="field">
-            <img
-              src="/coin.png"
-              alt="Coin"
-              className="icon"
-            />
+            <img src="/coin.png" alt="Coin" className="icon" />
+    
             <input
               type="number"
               value={coinValue}
-              readOnly
+              onChange={handleCoinValueChange}
               className="input"
+              placeholder="0"
+              min="1000"
+              max="100000"
+              step="1000"
             />
           </div>
         </div>
         <div className="rateAndButtons">
           <div className="rateContainer">
-            <div className="rate">Today's Rate<br />1 SUI : 30000000</div>
+            <div className="rate">Today's Rate<br />1000 coins = 0.0001 APT</div>
             <div className="buttons">
-              <button className="confirmButton" onClick={handleTopUp}>Top Up</button>
+              <button 
+                className="confirmButton" 
+                onClick={handleTopUp}
+                disabled={txnInProgress || !connected}
+              >
+                {txnInProgress ? 'Processing...' : 'Top Up'}
+              </button>
               <button className="cancelButton" onClick={() => router.back()}>Cancel</button>
             </div>
           </div>
@@ -83,18 +142,18 @@ const TopUp = () => {
       </div>
       <style jsx>{`
         .container {
-          background-image: url('/background2.jpg'); /* Place your second image in the public folder with this name */
+          background-image: url('/background2.jpg');
           background-color: brown;
           background-size: cover;
           background-position: center;
-          height: 100vh;
+          min-height: 100vh;
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: center;
           gap: 30px;
           padding: 20px;
-          font-family: 'Pixelify Sans', 'Courier New', Courier, monospace; /* Same font as SchoolTutorial */
+          font-family: 'Pixelify Sans', 'Courier New', Courier, monospace;
         }
         .exchangeContainer {
           display: flex;
@@ -118,19 +177,19 @@ const TopUp = () => {
           margin-top: 20px;
           margin-bottom: 20px;
         }
-        .input {
+        .slider {
+          width: 300px;
+          margin: 10px 0;
+        }
+        .aptosInput, .input {
           width: 205px;
           padding: 3px 10px;
           font-size: 30px;
           text-align: center;
         }
-        .suiInput {
-          width: 205px;
-          padding: 5px;
-          font-size: 30px;
-          text-align: center;
-          border: none; /* Remove the border */
-          background: transparent; /* Optional: make the background transparent */
+        .aptosInput {
+          border: none;
+          background: transparent;
         }
         .arrow {
           font-size: 200px;
@@ -174,6 +233,10 @@ const TopUp = () => {
         .confirmButton {
           background-color: green;
           color: white;
+        }
+        .confirmButton:disabled {
+          background-color: gray;
+          cursor: not-allowed;
         }
         .cancelButton {
           background-color: red;

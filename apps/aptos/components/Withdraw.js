@@ -1,55 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import Head from 'next/head';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { WalletSelector } from "../components/WalletSelector";
-import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
-import FloatingBalance from '../components/FloatingBalance';
-
-const APTOS_NETWORK = Network.DEVNET;
-const MODULE_ADDRESS = "0xee870cf0134dfd104150cad571d58315e67a8e36a51a16369a369b2d51a045b98";
-const MODULE_NAME = "faucet1";
-const CLAIM_FUNCTION_NAME = "claim";
-
-const config = new AptosConfig({ network: APTOS_NETWORK });
-const aptos = new Aptos(config);
+import { ABI } from "../utils/abi";
+import { useRouter } from 'next/router';
 
 const Withdrawal = () => {
-  const [coinValue, setCoinValue] = useState(3000);
-  const [aptosValue, setAptosValue] = useState(3000 / 30000000);
+  const [coinValue, setCoinValue] = useState(1000);
+  const [aptosValue, setAptosValue] = useState(0.0001);
   const [txnInProgress, setTxnInProgress] = useState(false);
-  const { connected, account, signAndSubmitTransaction } = useWallet();
-  const [balance, setBalance] = useState(null);
-
+  const [inGameBalance, setInGameBalance] = useState(100000);
   const router = useRouter();
-
-  useEffect(() => {
-    if (connected && account?.address) {
-      checkBalance(account.address);
-    } else {
-      setBalance(null);
-    }
-  }, [connected, account]);
-
-  const checkBalance = async (accountAddress) => {
-    try {
-      const resources = await aptos.getAccountResources({ accountAddress });
-      const aptosCoinResource = resources.find((r) => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>");
-      if (aptosCoinResource) {
-        setBalance(aptosCoinResource.data.coin.value);
-      }
-    } catch (error) {
-      console.error("Error checking balance:", error);
-    }
-  };
+  const { connected, account, signAndSubmitTransaction } = useWallet();
 
   const handleCoinValueChange = (e) => {
-    const value = e.target.value;
+    const value = Math.min(Math.max(parseInt(e.target.value), 1000), 100000);
     setCoinValue(value);
-    setAptosValue(value / 30000000);
+    setAptosValue((value / 1000 * 0.0001).toFixed(6));
   };
 
-  const handleTopUp = async () => {
+  const handleAptosValueChange = (e) => {
+    const value = Math.min(Math.max(parseFloat(e.target.value), 0.0001), 0.01);
+    setAptosValue(value);
+    setCoinValue(Math.floor(value / 0.0001 * 1000));
+  };
+
+  const handleWithdraw = useCallback(async () => {
     if (!connected || !account) {
       alert("Please connect your wallet first!");
       return;
@@ -60,105 +36,98 @@ const Withdrawal = () => {
       const response = await signAndSubmitTransaction({
         sender: account.address,
         data: {
-          function: `${MODULE_ADDRESS}::${MODULE_NAME}::${CLAIM_FUNCTION_NAME}`,
-          functionArguments: [coinValue], 
+          function: `${ABI.address}::${ABI.name}::claim`,
+          typeArguments: [],
+          functionArguments: [Math.floor(aptosValue * 100000000)],
         },
       });
 
       console.log("Transaction submitted:", response);
-      
-      // Wait for transaction to be confirmed
-      await aptos.waitForTransaction({ transactionHash: response.hash });
-      
-      alert("Top-up successful! Check your balance.");
-      checkBalance(account.address);
-
-      // Update coin balance on the server
-      const serverResponse = await fetch('/api/updateCoinBalanceForTopUp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ addedCoins: parseInt(coinValue, 10) }),
-      });
-
-      if (serverResponse.ok) {
-        router.reload();  // Reload the page to update the balance
-      } else {
-        const result = await serverResponse.json();
-        alert(`Server update failed: ${result.error}`);
-      }
+      alert("Withdrawal successful! Check your wallet balance.");
+      setInGameBalance(prevBalance => prevBalance - coinValue);
     } catch (error) {
-      console.error("Error topping up:", error);
-      alert(`Error topping up: ${error.message || "Unknown error"}`);
+      console.error("Error withdrawing:", error);
+      alert(`Error withdrawing: ${error.message || "Unknown error"}`);
     } finally {
       setTxnInProgress(false);
     }
-  };
+  }, [connected, account, signAndSubmitTransaction, aptosValue, coinValue]);
+
+
+  // const handleTransferComplete = async () => {
+  //   const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({ deductedCoins: parseInt(coinValue, 10) }),
+  //   });
+
+  //   if (response.ok) {
+  //     alert('Withdrawal successful!');
+  //     router.reload();  // Reload the page to update the balance
+  //   } else {
+  //     const result = await response.json();
+  //     alert(`Withdrawal failed: ${result.error}`);
+  //   }
+  // };
+
+  // const router = useRouter();
 
   return (
-    <>
-      <Head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
-        <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Sedan+SC&display=swap" rel="stylesheet" />
-      </Head>
-      <div className="container">
-        <FloatingBalance />
-        <WalletSelector />
-        <div className="exchangeContainer">
-          <div className="field">
-            <img src="/coin.png" alt="Coin" className="icon" />
-            <input
-              type="range"
-              min="3000"
-              max="100000"
-              step="100"
-              value={coinValue}
-              onChange={handleCoinValueChange}
-              className="slider"
-            />
-            <input
-              type="number"
-              value={coinValue}
-              onChange={handleCoinValueChange}
-              className="input"
-              placeholder="0"
-              min="3000"
-            />
-          </div>
-          <span className="arrow">→</span>
-          <div className="field aptos">
-            <img src="/aptos.png" alt="Aptos" className="icon" />
-            <input
-              type="number"
-              value={aptosValue}
-              readOnly
-              className="aptosInput"
-            />
+    <div className="container">
+      <WalletSelector />
+      <div className="exchangeContainer">
+        <div className="field">
+          <img src="/coin.png" alt="Coin" className="icon" />
+          <input
+            type="range"
+            min="1000"
+            max="100000"
+            step="1000"
+            value={coinValue}
+            onChange={handleCoinValueChange}
+            className="slider"
+          />
+          <input
+            type="number"
+            value={coinValue}
+            onChange={handleCoinValueChange}
+            className="input"
+            placeholder="0"
+            min="1000"
+            max="100000"
+          />
+        </div>
+        <span className="arrow">→</span>
+        <div className="field aptos">
+          <img src="/aptos.png" alt="Aptos" className="icon" />
+          <input
+            type="number"
+            value={aptosValue}
+            onChange={handleAptosValueChange}
+            className="aptosInput"
+            placeholder="0"
+            min="0.0001"
+            max="0.01"
+            step="0.0001"
+          />
+        </div>
+      </div>
+      <div className="rateAndButtons">
+        <div className="rateContainer">
+          <div className="rate">Today's Rate<br />1000 coins = 0.0001 APT</div>
+          <div className="buttons">
+            <button 
+              className="confirmButton" 
+              onClick={handleWithdraw}
+              disabled={txnInProgress || !connected}
+            >
+              {txnInProgress ? 'Processing...' : 'Withdraw'}
+            </button>
+            <button className="cancelButton" onClick={() => router.back()}>Cancel</button>
           </div>
         </div>
-        <div className="rateAndButtons">
-          <div className="rateContainer">
-            <div className="rate">Today's Rate<br />30000000 : 1 APT</div>
-            <div className="buttons">
-              <button 
-                className="confirmButton" 
-                onClick={handleTopUp}
-                disabled={txnInProgress || !connected}
-              >
-                {txnInProgress ? 'Processing...' : 'Top Up'}
-              </button>
-              <button className="cancelButton" onClick={() => router.back()}>Cancel</button>
-            </div>
-          </div>
-        </div>
-        {connected && account && (
-          <div className="balanceInfo">
-            <p>Connected Address: {account.address}</p>
-            <p>Balance: {balance !== null ? `${balance/100000000} APT` : 'Loading...'}</p>
-          </div>
-        )}
       </div>
       <style jsx>{`
         .container {
@@ -262,14 +231,8 @@ const Withdrawal = () => {
           background-color: red;
           color: white;
         }
-        .balanceInfo {
-          background-color: rgba(255, 255, 255, 0.8);
-          padding: 10px;
-          border-radius: 5px;
-          margin-top: 20px;
-        }
       `}</style>
-    </>
+    </div>
   );
 }
 

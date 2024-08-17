@@ -1,43 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { WalletSelector } from "../components/WalletSelector";
-import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
-
-const APTOS_NETWORK = Network.DEVNET;
-const MODULE_ADDRESS = "0xee870cf0134dfd104150cad571d58315e67a8e36a51a16369a369b2d51a045b98";
-const MODULE_NAME = "faucet1";
-const CLAIM_FUNCTION_NAME = "claim";
-const CONTRIBUTE_FUNCTION_NAME = "contribute";
-
-const config = new AptosConfig({ network: APTOS_NETWORK });
-const aptos = new Aptos(config);
+import { ABI } from "../utils/abi";
 
 export default function FaucetPage() {
   const { connected, account, signAndSubmitTransaction } = useWallet();
-  const [balance, setBalance] = useState(null);
   const [txnInProgress, setTxnInProgress] = useState(false);
+  const [claimAmount, setClaimAmount] = useState(100000); 
 
-  useEffect(() => {
-    if (connected && account?.address) {
-      checkBalance(account.address);
-    } else {
-      setBalance(null);
-    }
-  }, [connected, account]);
-
-  const checkBalance = async (accountAddress) => {
-    try {
-      const resources = await aptos.getAccountResources({ accountAddress });
-      const aptosCoinResource = resources.find((r) => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>");
-      if (aptosCoinResource) {
-        setBalance(aptosCoinResource.data.coin.value);
-      }
-    } catch (error) {
-      console.error("Error checking balance:", error);
-    }
-  };
-
-  const handleTransaction = async (functionName) => {
+  const handleClaim = useCallback(async () => {
     if (!connected || !account) {
       alert("Please connect your wallet first!");
       return;
@@ -48,28 +19,21 @@ export default function FaucetPage() {
       const response = await signAndSubmitTransaction({
         sender: account.address,
         data: {
-          function: `${MODULE_ADDRESS}::${MODULE_NAME}::${functionName}`,
-          functionArguments: [1000000], 
+          function: `${ABI.address}::${ABI.name}::claim`,
+          typeArguments: [],
+          functionArguments: [claimAmount],
         },
       });
 
       console.log("Transaction submitted:", response);
-      
-      // Wait for transaction to be confirmed
-      await aptos.waitForTransaction({ transactionHash: response.hash });
-      
-      alert(`${functionName === CLAIM_FUNCTION_NAME ? "Claim" : "Contribution"} successful! Check your balance.`);
-      checkBalance(account.address);
+      alert("Claim transaction submitted successfully!");
     } catch (error) {
-      console.error(`Error ${functionName === CLAIM_FUNCTION_NAME ? "claiming funds" : "contributing"}:`, error);
-      alert(`Error ${functionName === CLAIM_FUNCTION_NAME ? "claiming funds" : "contributing"}: ${error.message || "Unknown error"}`);
+      console.error("Error claiming funds:", error);
+      alert(`Error claiming funds: ${error.message || "Unknown error"}`);
     } finally {
       setTxnInProgress(false);
     }
-  };
-
-  const handleClaim = () => handleTransaction(CLAIM_FUNCTION_NAME);
-  const handleContribute = () => handleTransaction(CONTRIBUTE_FUNCTION_NAME);
+  }, [connected, account, signAndSubmitTransaction, claimAmount]);
 
   return (
     <div className="container mx-auto p-4">
@@ -80,26 +44,28 @@ export default function FaucetPage() {
       {connected && account ? (
         <div>
           <p className="mb-2">Connected Address: {account.address}</p>
-          <p className="mb-4">Balance: {balance !== null ? `${balance/100000000} APT` : 'Loading...'}</p>
-          <div className="flex space-x-4">
-            <button 
-              onClick={handleClaim}
-              disabled={txnInProgress}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >
-              {txnInProgress ? 'Processing...' : 'Claim 0.01 APT'}
-            </button>
-            <button 
-              onClick={handleContribute}
-              disabled={txnInProgress}
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-            >
-              {txnInProgress ? 'Processing...' : 'Contribute 0.01 APT'}
-            </button>
+          <div className="mb-4">
+            <label htmlFor="claimAmount" className="block mb-2">Claim Amount (APT):</label>
+            <input
+              id="claimAmount"
+              type="number"
+              value={claimAmount / 100000000}
+              onChange={(e) => setClaimAmount(Math.floor(parseFloat(e.target.value) * 100000000))}
+              min="0.001"
+              step="0.001"
+              className="border rounded px-2 py-1 w-full"
+            />
           </div>
+          <button 
+            onClick={handleClaim}
+            disabled={txnInProgress}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            {txnInProgress ? 'Processing...' : 'Claim Funds'}
+          </button>
         </div>
       ) : (
-        <p>Please connect your wallet to claim funds or contribute.</p>
+        <p>Please connect your wallet to claim funds.</p>
       )}
     </div>
   );
