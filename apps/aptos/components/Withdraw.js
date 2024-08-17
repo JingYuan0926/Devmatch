@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import FloatingBalance from '../components/FloatingBalance';
-import TransferFunds from '../components/TransferFund'; // Import the TransferFunds component
+import FloatingBalance from '../components/FloatingBalance'; // Import the TransferFunds component
 
 const Withdrawal = () => {
   const [coinValue, setCoinValue] = useState(3000);
