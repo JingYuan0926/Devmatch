@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { WalletSelector } from "../components/WalletSelector";
 import { ABI } from "../utils/abi";
-import { useRouter } from 'next/router';
 
 const Withdrawal = () => {
   const [coinValue, setCoinValue] = useState(1000);
@@ -30,12 +29,6 @@ const Withdrawal = () => {
       alert("Please connect your wallet first!");
       return;
     }
-  
-    // Show transfer UI or any other state change you want before the transaction starts
-    setShowTransfer(true);
-  
-    // Indicate that the transaction is in progress
-    setTxnInProgress(true);
   
     try {
       const response = await signAndSubmitTransaction({

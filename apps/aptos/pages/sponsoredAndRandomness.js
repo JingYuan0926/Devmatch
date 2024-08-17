@@ -1,21 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { WalletSelector } from "../components/WalletSelector";
 import { Aptos, AptosConfig, Network, Account } from "@aptos-labs/ts-sdk";
+import { ABI } from "../utils/abi";
 
 const APTOS_NETWORK = Network.DEVNET;
-const MODULE_ADDRESS = "0xee870cf134dfd104150cad571d58315e67a8e36a51a16369a369b2d51a045b98";
-const MODULE_NAME = "faucet1";
-const CLAIM_FUNCTION_NAME = "claim";
-const SPONSOR_ADDRESS = "0x7bda16775910109bd87aef69fcb4cdeb8c3defbfd51332fd025252f7b2172aa3";
-
 const config = new AptosConfig({ network: APTOS_NETWORK });
 const aptos = new Aptos(config);
 
-export default function SponsoredFaucetPage() {
-  const { connected, account, signAndSubmitTransaction, signTransaction } = useWallet();
+export default function SponsoredFaucetWithRandomness() {
+  const { connected, account, signTransaction } = useWallet();
   const [balance, setBalance] = useState(null);
   const [txnInProgress, setTxnInProgress] = useState(false);
+  const [claimAmount, setClaimAmount] = useState(1000000); // Default to 0.01 APT (1000000 octas)
 
   useEffect(() => {
     if (connected && account?.address) {
@@ -37,7 +34,7 @@ export default function SponsoredFaucetPage() {
     }
   };
 
-  const handleSponsoredClaim = async () => {
+  const handleSponsoredClaimWithRandomness = useCallback(async () => {
     if (!connected || !account) {
       alert("Please connect your wallet first!");
       return;
@@ -50,8 +47,8 @@ export default function SponsoredFaucetPage() {
         sender: account.address,
         withFeePayer: true,
         data: {
-          function: `${MODULE_ADDRESS}::${MODULE_NAME}::${CLAIM_FUNCTION_NAME}`,
-          functionArguments: [1000000],
+          function: `${ABI.address}::${ABI.name}::claim_with_randomness`,
+          functionArguments: [claimAmount],
         },
       });
 
@@ -89,11 +86,11 @@ export default function SponsoredFaucetPage() {
     } finally {
       setTxnInProgress(false);
     }
-  };
+  }, [connected, account, signTransaction, claimAmount]);
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Sponsored Aptos Faucet</h1>
+      <h1 className="text-2xl font-bold mb-4">Sponsored Aptos Faucet with Randomness</h1>
       <div className="mb-4">
         <WalletSelector />
       </div>
@@ -101,12 +98,24 @@ export default function SponsoredFaucetPage() {
         <div>
           <p className="mb-2">Connected Address: {account.address}</p>
           <p className="mb-4">Balance: {balance !== null ? `${balance/100000000} APT` : 'Loading...'}</p>
+          <div className="mb-4">
+            <label htmlFor="claimAmount" className="block mb-2">Claim Amount (APT):</label>
+            <input
+              id="claimAmount"
+              type="number"
+              value={claimAmount / 100000000}
+              onChange={(e) => setClaimAmount(Math.floor(parseFloat(e.target.value) * 100000000))}
+              min="0.01"
+              step="0.01"
+              className="border rounded px-2 py-1 w-full"
+            />
+          </div>
           <button 
-            onClick={handleSponsoredClaim}
+            onClick={handleSponsoredClaimWithRandomness}
             disabled={txnInProgress}
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
-            {txnInProgress ? 'Processing...' : 'Claim 0.01 APT (Sponsored)'}
+            {txnInProgress ? 'Processing...' : 'Claim Funds (Sponsored with Randomness)'}
           </button>
         </div>
       ) : (
