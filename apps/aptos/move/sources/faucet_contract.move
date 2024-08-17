@@ -2,6 +2,7 @@ module faucet_contract::faucet {
     use std::signer;
     use aptos_framework::coin;
     use aptos_framework::aptos_coin::AptosCoin;
+    use aptos_framework::randomness;
 
     // Error codes
     const E_NOT_INITIALIZED: u64 = 1;
@@ -11,13 +12,13 @@ module faucet_contract::faucet {
     const E_INSUFFICIENT_USER_BALANCE: u64 = 5;
 
     // Constants
-    const CLAIM_AMOUNT: u64 = 10000000; 
-    const CONTRIBUTION_AMOUNT: u64 = 10000000; 
+    const CLAIM_AMOUNT: u64 = 100000; 
+    const CONTRIBUTION_AMOUNT: u64 = 100000; 
 
     // Stores the faucet data
     struct FaucetData has key {
         balance: coin::Coin<AptosCoin>,
-        owner: address,0xa5323305c8c45f851433c3694b1d4d65e47b5480020ed328af5e82a03fe387af
+        owner: address,
     }
 
     // Initialize the faucet
@@ -39,6 +40,24 @@ module faucet_contract::faucet {
         assert!(coin::value(&faucet_data.balance) >= CLAIM_AMOUNT, E_INSUFFICIENT_BALANCE);
         
         let coins = coin::extract(&mut faucet_data.balance, CLAIM_AMOUNT);
+        coin::deposit(account_addr, coins);
+    }
+
+    // Add new function to claim with randomness
+    #[randomness]
+    entry fun claim_with_randomness(account: &signer) acquires FaucetData {
+        let account_addr = signer::address_of(account);
+        assert!(exists<FaucetData>(@faucet_contract), E_NOT_INITIALIZED);
+        
+        let faucet_data = borrow_global_mut<FaucetData>(@faucet_contract);
+        
+        // Generate a random number between 1 and 10
+        let multiplier = randomness::u64_range(1, 11);
+        let random_claim_amount = CLAIM_AMOUNT * multiplier;
+        
+        assert!(coin::value(&faucet_data.balance) >= random_claim_amount, E_INSUFFICIENT_BALANCE);
+        
+        let coins = coin::extract(&mut faucet_data.balance, random_claim_amount);
         coin::deposit(account_addr, coins);
     }
 
