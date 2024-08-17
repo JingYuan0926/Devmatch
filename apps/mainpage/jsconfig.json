@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",          // Required when using "paths"
+    "baseUrl": "pages",        // Adjusted base URL if your files are in src/
     "paths": {
-      "@/*": ["./*"]         // Custom module resolution for paths starting with "@/"
+      "@/*": ["./*"]         // Maps to src/* if baseUrl is "src"
     },
     "target": "esnext",      // Specify ECMAScript target version
     "module": "esnext",      // Specify module code generation
@@ -11,6 +11,7 @@
     "esModuleInterop": true, // Enables interoperability between CommonJS and ES modules
     "skipLibCheck": true     // Skip type checking of declaration files
   },
-  "include": ["src/**/*"],   // Include files for compilation
+  "include": ["pages/**/*"],   // Ensure this matches your file structure
   "exclude": ["node_modules"] // Exclude files from compilation
 }
+
