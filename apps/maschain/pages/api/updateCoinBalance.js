@@ -3,8 +3,15 @@ import path from 'path';
 
 export default function handler(req, res) {
   if (req.method === 'POST') {
-    const { additionalCoins } = req.body;
+    const { addedCoins } = req.body;
     const filePath = path.join(process.cwd(), 'coins.txt');
+
+    // Ensure addedCoins is a number
+    const additionalCoins = parseInt(addedCoins, 10);
+    if (isNaN(additionalCoins)) {
+      res.status(400).json({ error: 'Invalid coin amount' });
+      return;
+    }
 
     fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
@@ -12,7 +19,15 @@ export default function handler(req, res) {
         res.status(500).json({ error: 'Failed to read the coin balance' });
         return;
       }
-      const currentBalance = parseInt(data, 10);
+
+      // Parse current balance
+      let currentBalance = parseInt(data, 10);
+      if (isNaN(currentBalance)) {
+        console.error('Invalid current balance:', data);
+        res.status(500).json({ error: 'Invalid current balance' });
+        return;
+      }
+
       const newBalance = currentBalance + additionalCoins;
 
       fs.writeFile(filePath, newBalance.toString(), (err) => {

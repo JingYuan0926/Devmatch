@@ -9,7 +9,7 @@ export default function CreateWalletComponent() {
   const [walletAddress, setWalletAddress] = useState(null);
   const [balance, setBalance] = useState(null);
 
-  const CONTRACT_ADDRESS = "0x9c56DE7ab3a785BDc070BEcc8ee8B882f4670A77";
+  const CONTRACT_ADDRESS = "0x0FFC18b6C7F8a3F204D2c39843Ea8d5C87F4CC61";
 
   useEffect(() => {
     const savedWalletAddress = localStorage.getItem("walletAddress");
@@ -30,7 +30,7 @@ export default function CreateWalletComponent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = { name, email, ic, walletName };
-
+  
     try {
       const response = await fetch(
         `https://service-testnet.maschain.com/api/wallet/create-user`,
@@ -46,21 +46,46 @@ export default function CreateWalletComponent() {
           body: JSON.stringify(data),
         }
       );
-
+  
       if (!response.ok) {
         throw new Error("Failed to create user");
       }
-
+  
       const result = await response.json();
       const address = result.result.wallet.wallet_address;
-
+  
       localStorage.setItem("walletAddress", address);
       setWalletAddress(address);
       fetchBalance(address);
       closeModal();
+  
+      // Save wallet name and address in the desired format
+      await saveWalletNameAndAddressToFile(walletName, address);
     } catch (error) {
       console.error("Error creating user:", error);
       alert("Error creating user");
+    }
+  };
+
+  const saveWalletNameAndAddressToFile = async (walletName, address) => {
+    try {
+      const walletEntry = `${walletName},${address}`;
+      const response = await fetch("/api/save-wallet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ walletEntry }),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to save wallet name and address to file");
+      }
+  
+      console.log("Wallet name and address saved to file successfully");
+    } catch (error) {
+      console.error("Error saving wallet name and address to file:", error);
+      alert("Error saving wallet name and address to file");
     }
   };
 
@@ -104,7 +129,12 @@ export default function CreateWalletComponent() {
       const result = JSON.parse(responseText);
       
       if (result.status === 200) {
-        setBalance(result.result);
+        // Ensure that the balance is a number before applying toFixed
+        const balanceValue = parseFloat(result.result);
+        if (isNaN(balanceValue)) {
+          throw new Error(`Balance is not a number: ${result.result}`);
+        }
+        setBalance(balanceValue.toFixed(8)); // Set balance with 8 decimal places
       } else {
         throw new Error(`Unexpected response format: ${JSON.stringify(result)}`);
       }
@@ -113,20 +143,22 @@ export default function CreateWalletComponent() {
       alert("Error fetching balance: " + error.message);
     }
   };
+  
   return (
     <div className="wallet-container">
       {walletAddress ? (
         <div className="wallet-info">
           <div className="wallet-address-box">
             <span className="truncated-address">
-              {`${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`}
+              <img className="logo" src="/pen.png" alt="SUI Logo" width="50" height="50" />
             </span>
             <span className="full-address">Address: {walletAddress}</span>
             {balance !== null && <span className="balance">Balance: {balance} PEN</span>}
-          </div>
-          <button onClick={handleLogout} className="logout-button">
+            <button onClick={handleLogout} className="logout-button">
             Logout
           </button>
+          </div>
+          
         </div>
       ) : (
         <button onClick={openModal} className="create-wallet-button">
@@ -214,25 +246,29 @@ export default function CreateWalletComponent() {
         .wallet-address-box {
           padding: 10px;
           border-radius: 5px;
-          background-color: #4caf50;
+          background: linear-gradient(to right, #FFF3B0, #FFE5E5, #FFD5F3, #F6D5FF);
           color: white;
           cursor: pointer;
           position: relative;
           overflow: hidden;
-          width: 100px;
-          height: 20px;
+          width: 120px;
+          height: 60px;
           transition: all 0.3s ease;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
 
         .wallet-info:hover .wallet-address-box {
           width: 300px;
           height: auto;
+          color: #333;
+          padding-bottom: 50px; /* Ensure there is space for the logout button */
         }
 
         .balance {
           display: block;
           margin-top: 5px;
           font-weight: bold;
+          color: #333;
         }
 
         .truncated-address {
@@ -253,32 +289,37 @@ export default function CreateWalletComponent() {
           opacity: 0;
         }
 
+
         .wallet-info:hover .full-address {
           opacity: 1;
         }
 
         .logout-button {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          width: 100%;
-          padding: 10px;
-          border-radius: 0 0 5px 5px;
-          background-color: #f44336;
-          color: white;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          opacity: 0;
-          visibility: hidden;
-        }
+            position: absolute;
+            bottom: 10px; /* Position it within the expanded area */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #e53935;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+          }
+
 
         .wallet-info:hover .logout-button {
           opacity: 1;
           visibility: visible;
+          
         }
 
         .logout-button:hover {
-          background-color: #e53935;
+          background-color: #FFB3B3;
+          
         }
 
         .modal-overlay {
