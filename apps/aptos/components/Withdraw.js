@@ -1,9 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { WalletSelector } from "../components/WalletSelector";
 import { ABI } from "../utils/abi";
-import { useRouter } from 'next/router';
 
 const Withdrawal = () => {
   const [coinValue, setCoinValue] = useState(1000);
@@ -25,13 +24,11 @@ const Withdrawal = () => {
     setCoinValue(Math.floor(value / 0.0001 * 1000));
   };
 
-  const handleWithdraw = useCallback(async () => {
+  const handleWithdraw = async () => {
     if (!connected || !account) {
       alert("Please connect your wallet first!");
       return;
     }
-    setShowTransfer(true);
-  };
 
     setTxnInProgress(true);
     try {
@@ -40,7 +37,7 @@ const Withdrawal = () => {
         data: {
           function: `${ABI.address}::${ABI.name}::claim`,
           typeArguments: [],
-          functionArguments: [Math.floor(aptosValue * 100000000)],
+          arguments: [Math.floor(aptosValue * 100000000)],
         },
       });
 
@@ -53,28 +50,7 @@ const Withdrawal = () => {
     } finally {
       setTxnInProgress(false);
     }
-  }, [connected, account, signAndSubmitTransaction, aptosValue, coinValue]);
-
-
-  // const handleTransferComplete = async () => {
-  //   const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify({ deductedCoins: parseInt(coinValue, 10) }),
-  //   });
-
-  //   if (response.ok) {
-  //     alert('Withdrawal successful!');
-  //     router.reload();  // Reload the page to update the balance
-  //   } else {
-  //     const result = await response.json();
-  //     alert(`Withdrawal failed: ${result.error}`);
-  //   }
-  // };
-
-  // const router = useRouter();
+  };
 
   return (
     <div className="container">
