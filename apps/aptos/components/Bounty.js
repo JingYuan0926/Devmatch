@@ -66,7 +66,7 @@ export default function Bounty() {
 
     try {
       // Use a fixed maximum claim amount (e.g., 0.1 APT)
-      const maxClaimAmount = 10000000; // 0.1 APT in Octas
+      const maxClaimAmount = 100000; // 0.1 APT in Octas
 
       // 1. Build the transaction
       const transaction = await aptos.transaction.build.simple({
