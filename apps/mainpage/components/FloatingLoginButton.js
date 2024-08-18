@@ -64,7 +64,7 @@ export default function CreateWalletComponent() {
       // Generate random in-game currency coins
       const inGameCoins = Math.floor(Math.random() * (3500 - 2500 + 1)) + 2500;
       
-      // Save all information to a single file
+      // Save all information to both files
       await saveWalletInfoToFile(name, address, inGameCoins, penBalance);
       
       closeModal();
@@ -76,7 +76,7 @@ export default function CreateWalletComponent() {
 
   const fetchBalance = async (address) => {
     try {
-      const response = await fetch('/api/fetch-balance', {
+      const response = await fetch('/api/getWalletBalance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,8 +106,14 @@ export default function CreateWalletComponent() {
 
   const saveWalletInfoToFile = async (name, address, inGameCoins, penBalance) => {
     try {
+      // Prepare data for wallet_info.txt
       const walletInfo = `${name},${address},${inGameCoins},${penBalance}`;
-      const response = await fetch("/api/save-wallet-info", {
+      
+      // Prepare data for wallets.txt
+      const walletEntry = `${name},${address}`;
+
+      // Save to wallet_info.txt
+      const responseWalletInfo = await fetch("/api/save-wallet-info", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,14 +121,27 @@ export default function CreateWalletComponent() {
         body: JSON.stringify({ walletInfo }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to save wallet information to file");
+      if (!responseWalletInfo.ok) {
+        throw new Error("Failed to save wallet information to wallet_info.txt");
       }
 
-      console.log("Wallet information saved to file successfully");
+      // Save to wallets.txt
+      const responseWallets = await fetch("/api/save-wallet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ walletEntry }),
+      });
+
+      if (!responseWallets.ok) {
+        throw new Error("Failed to save wallet information to wallets.txt");
+      }
+
+      console.log("Wallet information saved to both files successfully");
     } catch (error) {
-      console.error("Error saving wallet information to file:", error);
-      alert("Error saving wallet information to file");
+      console.error("Error saving wallet information to files:", error);
+      alert("Error saving wallet information to files");
     }
   };
 
@@ -251,7 +270,7 @@ export default function CreateWalletComponent() {
           width: 300px;
           height: auto;
           color: #333;
-          padding-bottom: 50px; /* Ensure there is space for the logout button */
+          padding-bottom: 50px;
         }
 
         .balance {
@@ -285,7 +304,7 @@ export default function CreateWalletComponent() {
 
         .logout-button {
           position: absolute;
-          bottom: 10px; /* Position it within the expanded area */
+          bottom: 10px;
           left: 50%;
           transform: translateX(-50%);
           width: 40%;

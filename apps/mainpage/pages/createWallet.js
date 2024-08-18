@@ -1,18 +1,23 @@
 import StartGameButton from '../components/StartGame1';
 import FloatingLoginButton from '../components/FloatingLoginButton'; // Import the FloatingLoginButton component
-
+import Head from 'next/head';
 import Image from 'next/image';
 
 export default function CreateWalletPage() {
   return (
+    
     <div className="container">
+      <Head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+        <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Sedan+SC&display=swap" rel="stylesheet" />
+      </Head>
       <div className="modal-container">
         <FloatingLoginButton />
-        <StartGameButton
-         />
+        <StartGameButton/>
       </div>
       <div className="character-container">
-        <Image src="/csy.gif" alt="Character" width={400} height={400} />
+        <Image src="/maschaing.gif" alt="Character" width={400} height={400} />
       </div>
 
       <style jsx>{`
