@@ -9,16 +9,67 @@ export default function CreateWalletComponent() {
   const [walletAddress, setWalletAddress] = useState(null);
   const [balance, setBalance] = useState(null);
 
-  const CONTRACT_ADDRESS = "0x9c56DE7ab3a785BDc070BEcc8ee8B882f4670A77";
+  const CONTRACT_ADDRESS = "0x0FFC18b6C7F8a3F204D2c39843Ea8d5C87F4CC61";
   const API_URL = "https://service-testnet.maschain.com";
+  const CLIENT_ID = "fbe3e68b64bc94d69c8f630b32ae2815a1cc1c80daf69175e0a2f7f05dad6c9d";
+  const CLIENT_SECRET = "sk_ab29a87ed862fd9cf3b2922c7779d9d6e4def9ce059f5380d0b928ddd8cd91a5";
 
   useEffect(() => {
     const savedWalletAddress = localStorage.getItem("walletAddress");
     if (savedWalletAddress) {
       setWalletAddress(savedWalletAddress);
-      fetchBalance(savedWalletAddress);
+      fetchBalance(savedWalletAddress).then(balance => {
+        console.log("Fetched balance:", balance); // Debug log
+        setBalance(balance);
+      });
     }
   }, []);
+
+  const fetchBalance = async (address) => {
+    console.log("Fetching balance for address:", address); // Debug log
+    try {
+      const requestBody = {
+        wallet_address: address,
+        contract_address: CONTRACT_ADDRESS, // Make sure this is the correct contract address
+      };
+  
+      const response = await fetch(
+        `${API_URL}/api/token/balance`,
+        {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+            'client_id': CLIENT_ID,
+            'client_secret': CLIENT_SECRET,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+  
+      console.log("API response status:", response.status); // Debug log
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API error:", errorData); // Debug log
+        throw new Error(errorData.error || "Failed to fetch balance");
+      }
+  
+      const result = await response.json();
+      console.log("API response data:", result); // Debug log
+  
+      if (result.status === 200 && result.result) {
+        const balance = parseFloat(result.result).toFixed(8);
+        console.log("Parsed balance:", balance); // Debug log
+        return balance;
+      } else {
+        throw new Error("Balance not found in response");
+      }
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+      return "Error";
+    }
+  };
+
 
   const openModal = () => {
     setIsModalOpen(true);
@@ -38,10 +89,8 @@ export default function CreateWalletComponent() {
         {
           method: "POST",
           headers: {
-            client_id:
-              "fbe3e68b64bc94d69c8f630b32ae2815a1cc1c80daf69175e0a2f7f05dad6c9d",
-            client_secret:
-              "sk_ab29a87ed862fd9cf3b2922c7779d9d6e4def9ce059f5380d0b928ddd8cd91a5",
+            client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
@@ -60,6 +109,7 @@ export default function CreateWalletComponent() {
       
       // Fetch the PEN token balance
       const penBalance = await fetchBalance(address);
+      setBalance(penBalance);
       
       // Generate random in-game currency coins
       const inGameCoins = Math.floor(Math.random() * (3500 - 2500 + 1)) + 2500;
@@ -71,36 +121,6 @@ export default function CreateWalletComponent() {
     } catch (error) {
       console.error("Error creating user:", error);
       alert("Error creating user");
-    }
-  };
-
-  const fetchBalance = async (address) => {
-    try {
-      const response = await fetch('/api/getWalletBalance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ walletAddress: address }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch balance');
-      }
-
-      const data = await response.json();
-      const balanceValue = parseFloat(data.balance);
-      
-      if (isNaN(balanceValue)) {
-        throw new Error(`Balance is not a number: ${data.balance}`);
-      }
-      
-      setBalance(balanceValue.toFixed(8));
-      return balanceValue.toFixed(8);
-    } catch (error) {
-      console.error("Error fetching balance:", error.message);
-      alert("Error fetching balance: " + error.message);
-      return "0"; // Return "0" as a string if there's an error
     }
   };
 
@@ -150,6 +170,7 @@ export default function CreateWalletComponent() {
     setWalletAddress(null);
     setBalance(null);
   };
+
 
   return (
     <div className="wallet-container">

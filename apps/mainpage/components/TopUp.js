@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import FloatingBalance from '../components/FloatingBalance';
 import FloatingLoginButton from '../components/FloatingLoginButton';
 import Head from 'next/head';
+import ReturnFunds from '../components/ReturnFunds';
 
 const TopUp = () => {
   const [balance, setBalance] = useState(null);
