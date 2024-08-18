@@ -46,6 +46,6 @@
     "name": "Bentley",
     "price": 2000,
     "imageUrl": "/bentley.png",
-    "available": true
+    "available": false
   }
 ]

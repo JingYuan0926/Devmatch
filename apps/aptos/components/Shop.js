@@ -1,8 +1,15 @@
-// pages/shop.js
+
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { WalletSelector } from "../components/WalletSelector";
+import { ABI1 } from "../utils/abi1.js";
 
+// Ensure ABI1 is properly defined
+if (!ABI1 || !ABI1.address) {
+  console.error("ABI1 or ABI1.address is not properly defined. Please check your abi1.js file.");
+}
 const Shop = () => {
   const [cars, setCars] = useState([]);
   const [selectedCar, setSelectedCar] = useState(null);
@@ -11,6 +18,7 @@ const Shop = () => {
   const [status, setStatus] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { connected, account, signAndSubmitTransaction } = useWallet();
 
   useEffect(() => {
     fetch('/api/getCars')
@@ -47,10 +55,16 @@ const Shop = () => {
 
       // Deduct the car price from the user's balance
       await updateBalance(-selectedCar.price);
+      const txnResponse = await signAndSubmitTransaction({
+        sender: account.address,
+        data: {
+          function: `${ABI1.address}::nft_collection::mint_nft`,
+          typeArguments: [],
+          functionArguments: [account.address],
+        },
+      });
 
-
-      // Mint NFT for the user
-      const userAddress = localStorage.getItem('zkLoginUserAddress');
+      console.log("NFT minting transaction submitted:", txnResponse);
       if (userAddress) {
         await MintNFT(userAddress, setStatus, setIsLoading);
       } else {

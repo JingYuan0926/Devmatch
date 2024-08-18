@@ -114,6 +114,8 @@ export const contract = getContract({
     abi: contractABI
 });
 
+
+
 export const chain = defineChain(534351);
 
 
