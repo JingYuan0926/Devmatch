@@ -4,6 +4,7 @@ import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { useRouter } from 'next/router';
 import { WalletSelector } from "./WalletSelector";
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
+import  Bounty  from './Bounty';
 
 const APTOS_COIN = "0x1::aptos_coin::AptosCoin";
 const COIN_STORE = `0x1::coin::CoinStore<${APTOS_COIN}>`;
@@ -29,14 +30,23 @@ const GamePlay = () => {
 
   // Function to check the user's balance
   const checkBalance = async (accountAddress) => {
-    console.log('Checking balance for address:', accountAddress);
-    const balanceResource = await sdk.getAccountResource({
-      accountAddress,
-      resourceType: COIN_STORE,
-    });
-    // console.log('Balance resource:', balanceResource);
-    const amount = Number(balanceResource.coin.value);
-    console.log(`User's balance is: ${amount} APT`);
+    try {
+      console.log('Checking balance for address:', accountAddress);
+      const balanceResource = await sdk.getAccountResource({
+        accountAddress,
+        resourceType: COIN_STORE,
+      });
+      const amount = Number(balanceResource.coin.value);
+      console.log(`User's balance is: ${amount} APT`);
+      setBalance(amount);
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        console.error('Resource not found, account may not have this resource');
+      } else {
+        console.error('An error occurred while fetching the balance:', error);
+      }
+      setBalance(0); // Assuming balance is 0 if resource is not found
+    }
   };
 
   useEffect(() => {
@@ -88,27 +98,27 @@ const GamePlay = () => {
     switch (e.key) {
       case 'w':
       case 'W':
-        newPos.y -= 20;
+        newPos.y -= 30;
         setSprite('W.gif');
         setDirection('W');
-        newMapPos.y += 20 * scale;
+        newMapPos.y += 30 * scale;
         break;
       case 'a':
       case 'A':
-        newPos.x -= 20;
+        newPos.x -= 30;
         setSprite('A.gif');
         setDirection('A');
         break;
       case 's':
       case 'S':
-        newPos.y += 20;
+        newPos.y += 30;
         setSprite('S.gif');
         setDirection('S');
-        newMapPos.y -= 20 * scale;
+        newMapPos.y -= 30 * scale;
         break;
       case 'd':
       case 'D':
-        newPos.x += 20;
+        newPos.x += 30;
         setSprite('D.gif');
         setDirection('D');
         break;
@@ -142,17 +152,18 @@ const GamePlay = () => {
     <div className="gameContainer">
       <div className="walletSelectorWrapper" style={{
         position: 'absolute',
-        left: "200px",
+        left: "10px",
         top: "10px",
         zIndex: 1000
       }}>
         <WalletSelector />
+        <Bounty />
       </div>
       <div className="mapWrapper">
         <div className="mapContainer">
           <Image src="/assets/map.png" alt="Map" layout="fill" />
           <div className="character">
-            <Image src={`/assets/${sprite}`} alt="Character" width={188} height={188} />
+            <Image src={`/assets/${sprite}`} alt="Character" width={888} height={288} />
           </div>
         </div>
       </div>
@@ -192,8 +203,8 @@ const GamePlay = () => {
           position: absolute;
           left: ${position.x}px;
           top: ${position.y}px;
-          width: 128px;
-          height: 128px;
+          width: 188px;
+          height: 188px;
         }
       `}</style>
     </div>

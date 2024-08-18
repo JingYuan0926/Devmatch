@@ -1,6 +1,8 @@
 import React from 'react';
 import Head from 'next/head';
 import Wall from '../components/Wall';
+import {WalletSelector} from '../components/WalletSelector';
+import FloatingBalance from '../components/FloatingBalance';
 
 const Showcase = () => {
   const userId = 1;  // Assuming user ID is 1 for this example
@@ -17,6 +19,8 @@ const Showcase = () => {
       </Head>
       <div className="container">
         <div className="header">
+          <WalletSelector />
+          <FloatingBalance />
           <h1>Your NFT Showcase</h1>
           <p>Explore your unique collection</p>
         </div>
@@ -31,7 +35,7 @@ const Showcase = () => {
           justify-content: center;
           padding: 20px;
           background-image: url('bg.png');
-          min-height: 90vh;
+          min-height: 100vh;
           color: white;
         }
 

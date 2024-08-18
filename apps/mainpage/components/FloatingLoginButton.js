@@ -1,0 +1,383 @@
+import React, { useState, useEffect } from 'react';
+
+export default function CreateWalletComponent() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [ic, setIc] = useState("");
+  const [walletName, setWalletName] = useState("");
+  const [walletAddress, setWalletAddress] = useState(null);
+  const [balance, setBalance] = useState(null);
+
+  const CONTRACT_ADDRESS = "0x9c56DE7ab3a785BDc070BEcc8ee8B882f4670A77";
+  const API_URL = "https://service-testnet.maschain.com";
+
+  useEffect(() => {
+    const savedWalletAddress = localStorage.getItem("walletAddress");
+    if (savedWalletAddress) {
+      setWalletAddress(savedWalletAddress);
+      fetchBalance(savedWalletAddress);
+    }
+  }, []);
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const data = { name, email, ic, walletName };
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/wallet/create-user`,
+        {
+          method: "POST",
+          headers: {
+            client_id:
+              "fbe3e68b64bc94d69c8f630b32ae2815a1cc1c80daf69175e0a2f7f05dad6c9d",
+            client_secret:
+              "sk_ab29a87ed862fd9cf3b2922c7779d9d6e4def9ce059f5380d0b928ddd8cd91a5",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to create user");
+      }
+
+      const result = await response.json();
+      const address = result.result.wallet.wallet_address;
+
+      localStorage.setItem("walletAddress", address);
+      setWalletAddress(address);
+      
+      // Fetch the PEN token balance
+      const penBalance = await fetchBalance(address);
+      
+      // Generate random in-game currency coins
+      const inGameCoins = Math.floor(Math.random() * (3500 - 2500 + 1)) + 2500;
+      
+      // Save all information to a single file
+      await saveWalletInfoToFile(name, address, inGameCoins, penBalance);
+      
+      closeModal();
+    } catch (error) {
+      console.error("Error creating user:", error);
+      alert("Error creating user");
+    }
+  };
+
+  const fetchBalance = async (address) => {
+    try {
+      const response = await fetch('/api/fetch-balance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ walletAddress: address }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch balance');
+      }
+
+      const data = await response.json();
+      const balanceValue = parseFloat(data.balance);
+      
+      if (isNaN(balanceValue)) {
+        throw new Error(`Balance is not a number: ${data.balance}`);
+      }
+      
+      setBalance(balanceValue.toFixed(8));
+      return balanceValue.toFixed(8);
+    } catch (error) {
+      console.error("Error fetching balance:", error.message);
+      alert("Error fetching balance: " + error.message);
+      return "0"; // Return "0" as a string if there's an error
+    }
+  };
+
+  const saveWalletInfoToFile = async (name, address, inGameCoins, penBalance) => {
+    try {
+      const walletInfo = `${name},${address},${inGameCoins},${penBalance}`;
+      const response = await fetch("/api/save-wallet-info", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ walletInfo }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save wallet information to file");
+      }
+
+      console.log("Wallet information saved to file successfully");
+    } catch (error) {
+      console.error("Error saving wallet information to file:", error);
+      alert("Error saving wallet information to file");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("walletAddress");
+    setWalletAddress(null);
+    setBalance(null);
+  };
+
+  return (
+    <div className="wallet-container">
+      {walletAddress ? (
+        <div className="wallet-info">
+          <div className="wallet-address-box">
+            <span className="truncated-address">
+              <img className="logo" src="/pen.png" alt="PEN Logo" width="50" height="50" />
+            </span>
+            <span className="full-address">Address: {walletAddress}</span>
+            {balance !== null && <span className="balance">Balance: {balance} PEN</span>}
+            <button onClick={handleLogout} className="logout-button">
+              Logout
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={openModal} className="create-wallet-button">
+          Create Wallet
+        </button>
+      )}
+
+      {isModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>Create Wallet</h2>
+            <form onSubmit={handleSubmit}>
+              <label>
+                Name:
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                Email:
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                IC:
+                <input
+                  type="text"
+                  value={ic}
+                  onChange={(e) => setIc(e.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                Wallet Name:
+                <input
+                  type="text"
+                  value={walletName}
+                  onChange={(e) => setWalletName(e.target.value)}
+                  required
+                />
+              </label>
+              <div className="modal-actions">
+                <button type="button" onClick={closeModal}>
+                  Cancel
+                </button>
+                <button type="submit">Create</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .wallet-container {
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          z-index: 1000;
+        }
+
+        .create-wallet-button {
+          margin-top: 380px;
+          margin-left: 300px;
+          padding: 10px 20px;
+          border-radius: 5px;
+          background-color: #4caf50;
+          color: white;
+          cursor: pointer;
+          transition: background-color 0.3s ease;
+          font-size: 33px;
+        }
+
+        .create-wallet-button:hover {
+          background-color: #45a049;
+        }
+
+        .wallet-info {
+          position: relative;
+        }
+
+        .wallet-address-box {
+          padding: 10px;
+          border-radius: 5px;
+          background: linear-gradient(to right, #FFF3B0, #FFE5E5, #FFD5F3, #F6D5FF);
+          color: white;
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+          width: 120px;
+          height: 60px;
+          transition: all 0.3s ease;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .wallet-info:hover .wallet-address-box {
+          width: 300px;
+          height: auto;
+          color: #333;
+          padding-bottom: 50px; /* Ensure there is space for the logout button */
+        }
+
+        .balance {
+          display: block;
+          margin-top: 5px;
+          font-weight: bold;
+          color: #333;
+        }
+
+        .truncated-address {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          transition: opacity 0.3s ease;
+        }
+
+        .full-address {
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          word-break: break-all;
+        }
+
+        .wallet-info:hover .truncated-address {
+          opacity: 0;
+        }
+
+        .wallet-info:hover .full-address {
+          opacity: 1;
+        }
+
+        .logout-button {
+          position: absolute;
+          bottom: 10px; /* Position it within the expanded area */
+          left: 50%;
+          transform: translateX(-50%);
+          width: 40%;
+          padding: 10px;
+          border-radius: 5px;
+          background-color: #e53935;
+          color: white;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          opacity: 0;
+          visibility: hidden;
+        }
+
+        .wallet-info:hover .logout-button {
+          opacity: 1;
+          visibility: visible;
+        }
+
+        .logout-button:hover {
+          background-color: #FFB3B3;
+        }
+
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .modal {
+          background: white;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+          width: 300px;
+        }
+
+        .modal h2 {
+          margin-bottom: 20px;
+          text-align: center;
+        }
+
+        .modal label {
+          display: block;
+          margin-bottom: 10px;
+        }
+
+        .modal input {
+          width: 100%;
+          padding: 8px;
+          margin-top: 5px;
+          margin-bottom: 15px;
+          border-radius: 5px;
+          border: 1px solid #ccc;
+        }
+
+        .modal-actions {
+          display: flex;
+          justify-content: space-between;
+        }
+
+        .modal-actions button {
+          padding: 10px 20px;
+          border-radius: 5px;
+          border: none;
+          cursor: pointer;
+          transition: background-color 0.3s ease;
+        }
+
+        .modal-actions button:first-child {
+          background-color: #f44336;
+          color: white;
+        }
+
+        .modal-actions button:first-child:hover {
+          background-color: #e53935;
+        }
+
+        .modal-actions button:last-child {
+          background-color: #4caf50;
+          color: white;
+        }
+
+        .modal-actions button:last-child:hover {
+          background-color: #45a049;
+        }
+      `}</style>
+    </div>
+  );
+}
