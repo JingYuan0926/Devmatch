@@ -7,9 +7,9 @@ const LandingPage = () => {
   return (
     <div className="container">
       <Head>
-        <title>Landing Page</title>
-        <meta name="description" content="Landing page for the LEarn game" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+        <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Sedan+SC&display=swap" rel="stylesheet" />
       </Head>
       <main className="main">
         <div className="buttons">

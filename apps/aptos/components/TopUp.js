@@ -43,8 +43,26 @@ const TopUp = () => {
       });
 
       console.log("Transaction submitted:", response);
-      alert("Top-up successful! Check your in-game balance.");
-      console.log(`Added ${coinValue} to in-game balance`);
+      
+      // After successful wallet transaction, update the coin balance
+      const updateResponse = await fetch('/api/updateCoinBalance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ additionalCoins: coinValue }),
+      });
+
+      if (updateResponse.ok) {
+        const result = await updateResponse.json();
+        console.log(`Updated coin balance: ${result.balance}`);
+        alert("Top-up successful! Your in-game balance has been updated.");
+        router.reload();  // Reload the page to update the balance
+      } else {
+        console.error("Failed to update coin balance");
+        alert("Top-up successful, but failed to update in-game balance. Please contact support.");
+      }
+      
     } catch (error) {
       console.error("Error topping up:", error);
       alert(`Error topping up: ${error.message || "Unknown error"}`);

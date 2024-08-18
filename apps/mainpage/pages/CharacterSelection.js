@@ -18,20 +18,20 @@ const CharacterSelection = () => {
   return (
     <div className="container">
       <Head>
-        <title>Character Selection</title>
-        <meta name="description" content="Select your character" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+        <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Sedan+SC&display=swap" rel="stylesheet" />
       </Head>
       <main className="main">
         <h1 className="title">Choose Your Character</h1>
         <div className="character-selection">
           <div className="character" onClick={() => handleCharacterSelect('character1')}>
             <Image src="/maschaing.gif" alt="Character 1" width={400} height={400} className="character-image" />
-            <p className="character-name">Character 1</p>
+            <p className="character-name">Thomas</p>
           </div>
           <div className="character" onClick={() => handleCharacterSelect('character2')}>
             <Image src="/aptosg.gif" alt="Character 2" width={400} height={400} className="character-image" />
-            <p className="character-name">Character 2</p>
+            <p className="character-name">Ming</p>
           </div>
         </div>
       </main>
@@ -53,6 +53,7 @@ const CharacterSelection = () => {
           background-size: cover;
           background-position: center;
           background-repeat: no-repeat;
+          font-family: 'Pixelify Sans', 'Courier New', Courier, monospace; 
         }
         .main {
           width: 100%;
@@ -62,26 +63,27 @@ const CharacterSelection = () => {
         .title {
           font-size: 3rem;
           font-weight: bold;
-          margin-bottom: 2rem;
+          margin-bottom: 1rem;
           color: black;
+          
         }
         .character-selection {
           display: flex;
           justify-content: space-around;
-          width: 80%;
+          width: 10%;
         }
         .character {
           cursor: pointer;
           text-align: center;
           transition: transform 0.3s ease;
-          margin-left: 220px;
+          margin-left: 154px;
         }
         .character:hover {
           transform: scale(1.05);
         }
         .character-name {
-          margin-top: 10px;
-          font-size: 1.2rem;
+          margin-top: 5px;
+          font-size: 2.2rem;
           color: black;
           font-weight: bold;
         }

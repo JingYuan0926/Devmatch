@@ -90,6 +90,7 @@ const Shop = () => {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
         <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Sedan+SC&display=swap" rel="stylesheet" />
       </Head>
+      
       <style jsx>{`
         .shop-container {
           display: flex;
@@ -99,7 +100,7 @@ const Shop = () => {
           justify-content: center;
           align-items: center;
           font-family: 'Pixelify Sans', sans-serif;
-          height: 90vh;
+          height: 100vh;
           position: relative;
         }
 

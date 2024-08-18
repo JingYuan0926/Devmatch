@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 
 const StartGameButton = () => {
   const router = useRouter();
@@ -9,6 +10,11 @@ const StartGameButton = () => {
 
   return (
     <>
+      <Head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+        <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Sedan+SC&display=swap" rel="stylesheet" />
+      </Head>
       <button className="float-button start-game-button" onClick={handleButtonClick}>
         Start Game
       </button>
