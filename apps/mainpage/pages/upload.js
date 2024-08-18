@@ -2,6 +2,14 @@ import { useState } from 'react';
 import fs from 'fs';
 import path from 'path';
 import Head from 'next/head';
+import { ThirdwebProvider, ConnectButton, useSendTransaction, useActiveAccount } from 'thirdweb/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ethers } from 'ethers';
+import { createWallet, walletConnect, inAppWallet } from "thirdweb/wallets";
+import { client, contract } from '../utils/constants';
+import { prepareContractCall, sendTransaction, resolveMethod } from "thirdweb";
+
+const queryClient = new QueryClient();
 
 export async function getServerSideProps() {
   const filePath = path.join(process.cwd(), 'wallet_info.txt');
@@ -21,12 +29,45 @@ export async function getServerSideProps() {
   };
 }
 
-export default function UploadPage({ walletInfo }) {
+function UploadComponent({ walletInfo }) {
   const [data, setData] = useState(walletInfo);
   const [publishedData, setPublishedData] = useState(null);
+  const activeAccount = useActiveAccount();
+  const wallets = [
+    createWallet("io.metamask"),
+    createWallet("com.coinbase.wallet"),
+    walletConnect(),
+    inAppWallet({
+      auth: {
+        options: [
+          "email",
+          "google",
+          "apple",
+          "facebook",
+          "phone",
+        ],
+      },
+    }),
+  ];
 
-  const handlePublish = () => {
+  const { mutate: sendTransaction, isPending } = useSendTransaction();
+
+  const handlePublish = async () => {
     setPublishedData(data);
+    if (activeAccount) {
+      try {
+        const transaction = prepareContractCall({
+          contract,
+          method: resolveMethod("claimEth"),
+          params: [ethers.parseEther("0.0008", 'ether')],
+        });
+        sendTransaction(transaction);
+      } catch (error) {
+        console.error(error);
+      }
+    } else {
+      alert("Please connect your wallet to claim tokens.");
+    }
   };
 
   return (
@@ -40,6 +81,19 @@ export default function UploadPage({ walletInfo }) {
           rel="stylesheet"
         />
       </Head>
+
+      <ConnectButton
+        client={client}
+        wallets={wallets}
+        theme="dark"
+        connectModal={{ size: "wide" }}
+        detailsModal={{
+          payOptions: {
+            buyWithFiat: false,
+            buyWithCrypto: false,
+          },
+        }}
+      />
 
       <h1>Wallet Information</h1>
       <table>
@@ -63,7 +117,7 @@ export default function UploadPage({ walletInfo }) {
         </tbody>
       </table>
       <button onClick={handlePublish} className="publish-button">
-        Publish
+        Publish and Claim Tokens
       </button>
 
       {publishedData && (
@@ -73,7 +127,7 @@ export default function UploadPage({ walletInfo }) {
         </div>
       )}
 
-      <style jsx>{`
+<style jsx>{`
         .container {
           font-family: 'Pixelify Sans', sans-serif;
           padding: 20px;
@@ -148,5 +202,15 @@ export default function UploadPage({ walletInfo }) {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function UploadPage({ walletInfo }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThirdwebProvider clientId={client}>
+        <UploadComponent walletInfo={walletInfo} />
+      </ThirdwebProvider>
+    </QueryClientProvider>
   );
 }
