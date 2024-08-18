@@ -1,13 +1,13 @@
 import React from 'react';
 import Withdrawal from '../components/Withdraw';
-import FloatingLoginButton from '../components/FloatingLoginButton';
 import FloatingBalance from '../components/FloatingBalance';
+import { WalletSelector } from '../components/WalletSelector';
 
 const BankPage = () => {
   return (
     <div>
-      <FloatingLoginButton />
       <FloatingBalance />
+      <WalletSelector />
       <Withdrawal />
     </div>
   );

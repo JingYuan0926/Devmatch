@@ -1,12 +1,12 @@
 import Shop from "../components/Shop";
-import FloatingLoginButton from '../components/FloatingLoginButton';
 import FloatingBalance from '../components/FloatingBalance';
+import {WalletSelector} from '../components/WalletSelector';
 
 export default function Home() {
   return(
     <div>
       <FloatingBalance />
-      <FloatingLoginButton />
+      <WalletSelector />
       <Shop />
     </div>
   ) 

@@ -1,13 +1,13 @@
 // pages/bank.js
 import React from 'react';
 import LEarnBankATM from '../components/LEarnBankATM';
-import FloatingLoginButton from '../components/FloatingLoginButton';
 import FloatingBalance from '../components/FloatingBalance';
+import { WalletSelector } from '../components/WalletSelector';
 
 const BankPage = () => {
   return (
     <div>
-      <FloatingLoginButton />
+      <WalletSelector />
       <FloatingBalance />
       <LEarnBankATM />
     </div>

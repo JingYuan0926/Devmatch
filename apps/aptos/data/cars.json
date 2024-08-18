@@ -4,14 +4,14 @@
     "name": "Mc Laren",
     "price": 1200,
     "imageUrl": "/mclaren.png",
-    "available": true
+    "available": false
   },
   {
     "id": 2,
     "name": "Lamborghini",
     "price": 1200,
     "imageUrl": "/lamborghini.png",
-    "available": true
+    "available": false
   },
   {
     "id": 3,
@@ -49,5 +49,3 @@
     "available": true
   }
 ]
-
-

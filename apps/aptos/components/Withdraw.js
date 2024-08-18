@@ -1,104 +1,150 @@
-import React, { useState } from 'react';
-import Head from 'next/head';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import FloatingBalance from '../components/FloatingBalance';
-import FloatingLoginButton from '../components/FloatingLoginButton';
-import TransferFunds from '../components/TransferFund'; // Import the TransferFunds component
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { WalletSelector } from "../components/WalletSelector";
+import { ABI } from "../utils/abi";
 
 const Withdrawal = () => {
-  const [coinValue, setCoinValue] = useState(3000);
-  const [suiValue, setSuiValue] = useState(3000 / 30000000);
-  const [zkLoginUserAddress, setZkLoginUserAddress] = useState(null);
-  const [showTransfer, setShowTransfer] = useState(false);
+  const [coinValue, setCoinValue] = useState(1000);
+  const [aptosValue, setAptosValue] = useState(0.0001);
+  const [txnInProgress, setTxnInProgress] = useState(false);
+  const [inGameBalance, setInGameBalance] = useState(100000);
+  const router = useRouter();
+  const { connected, account, signAndSubmitTransaction } = useWallet();
 
   const handleCoinValueChange = (e) => {
-    const value = e.target.value;
+    const value = Math.min(Math.max(parseInt(e.target.value), 1000), 100000);
     setCoinValue(value);
-    setSuiValue(value / 30000000);
+    setAptosValue((value / 1000 * 0.0001).toFixed(6));
   };
 
-  const handleWithdrawal = async () => {
-    setShowTransfer(true);
+  const handleAptosValueChange = (e) => {
+    const value = Math.min(Math.max(parseFloat(e.target.value), 0.0001), 0.01);
+    setAptosValue(value);
+    setCoinValue(Math.floor(value / 0.0001 * 1000));
   };
 
-  const handleTransferComplete = async () => {
-    const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ deductedCoins: parseInt(coinValue, 10) }),
-    });
-
-    if (response.ok) {
-      alert('Withdrawal successful!');
-      router.reload();  // Reload the page to update the balance
-    } else {
-      const result = await response.json();
-      alert(`Withdrawal failed: ${result.error}`);
+  const handleWithdraw = useCallback(async () => {
+    if (!connected || !account) {
+      alert("Please connect your wallet first!");
+      return;
     }
-  };
+  
+    setTxnInProgress(true);
+    try {
+      const response = await signAndSubmitTransaction({
+        sender: account.address,
+        data: {
+          function: `${ABI.address}::${ABI.name}::claim`,
+          typeArguments: [],
+          functionArguments: [Math.floor(aptosValue * 100000000)],
+        },
+      });
+  
+      console.log("Transaction submitted:", response);
+      
+      // After successful wallet transaction, update the coin balance
+      const updateResponse = await fetch('/api/updateCoinBalanceForWithdrawal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ deductedCoins: coinValue }),
+      });
 
-  const handleLogin = (address) => {
-    setZkLoginUserAddress(address);
-  };
+      if (updateResponse.ok) {
+        const result = await updateResponse.json();
+        console.log(`Updated coin balance: ${result.balance}`);
+        alert("Withdrawal successful! Your in-game balance has been updated.");
+        setInGameBalance(result.balance);
+        router.reload();  // Reload the page to update the balance
+      } else {
+        const errorData = await updateResponse.json();
+        console.error("Failed to update coin balance:", errorData.error);
+        alert(`Withdrawal successful, but failed to update in-game balance: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Error withdrawing:", error);
+      alert(`Error withdrawing: ${error.message || "Unknown error"}`);
+    } finally {
+      setTxnInProgress(false);
+    }
+  }, [connected, account, signAndSubmitTransaction, aptosValue, coinValue]);
+  
 
-  const router = useRouter();
+  // const handleTransferComplete = async () => {
+  //   const response = await fetch('/api/updateCoinBalanceForWithdrawal', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({ deductedCoins: parseInt(coinValue, 10) }),
+  //   });
+
+  //   if (response.ok) {
+  //     alert('Withdrawal successful!');
+  //     router.reload();  // Reload the page to update the balance
+  //   } else {
+  //     const result = await response.json();
+  //     alert(`Withdrawal failed: ${result.error}`);
+  //   }
+  // };
+
+  // const router = useRouter();
 
   return (
-    <>
-      <Head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
-        <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Sedan+SC&display=swap" rel="stylesheet" />
-      </Head>
-      <div className="container">
-        <FloatingBalance />
-        <FloatingLoginButton onLogin={handleLogin} />
-        <div className="exchangeContainer">
-          <div className="field">
-            <img src="/coin.png" alt="Coin" className="icon" />
-            <input
-              type="range"
-              min="3000"
-              max="100000" // Set an appropriate max value
-              step="100"
-              value={coinValue}
-              onChange={handleCoinValueChange}
-              className="slider"
-            />
-            <input
-              type="number"
-              value={coinValue}
-              onChange={handleCoinValueChange}
-              className="input"
-              placeholder="0"
-              min="3000"
-            />
-          </div>
-          <span className="arrow">→</span>
-          <div className="field sui">
-            <img src="/sui.png" alt="Sui" className="icon" />
-            <input
-              type="number"
-              value={suiValue}
-              readOnly
-              className="suiInput"
-            />
+    <div className="container">
+      <div className="exchangeContainer">
+        <div className="field">
+          <img src="/coin.png" alt="Coin" className="icon" />
+          <input
+            type="range"
+            min="1000"
+            max="100000"
+            step="1000"
+            value={coinValue}
+            onChange={handleCoinValueChange}
+            className="slider"
+          />
+          <input
+            type="number"
+            value={coinValue}
+            onChange={handleCoinValueChange}
+            className="input"
+            placeholder="0"
+            min="1000"
+            max="100000"
+          />
+        </div>
+        <span className="arrow">→</span>
+        <div className="field aptos">
+          <img src="/aptos.png" alt="Aptos" className="icon" />
+          <input
+            type="number"
+            value={aptosValue}
+            onChange={handleAptosValueChange}
+            className="aptosInput"
+            placeholder="0"
+            min="0.0001"
+            max="0.01"
+            step="0.0001"
+          />
+        </div>
+      </div>
+      <div className="rateAndButtons">
+        <div className="rateContainer">
+          <div className="rate">Today's Rate<br />1000 coins = 0.0001 APT</div>
+          <div className="buttons">
+            <button 
+              className="confirmButton" 
+              onClick={handleWithdraw}
+              disabled={txnInProgress || !connected}
+            >
+              {txnInProgress ? 'Processing...' : 'Withdraw'}
+            </button>
+            <button className="cancelButton" onClick={() => router.back()}>Cancel</button>
           </div>
         </div>
-        <div className="rateAndButtons">
-          <div className="rateContainer">
-            <div className="rate">Today's Rate<br />30000000 : 1 SUI</div>
-            <div className="buttons">
-              <button className="confirmButton" onClick={handleWithdrawal}>Withdraw</button>
-              <button className="cancelButton" onClick={() => router.back()}>Cancel</button>
-            </div>
-          </div>
-        </div>
-        {showTransfer && zkLoginUserAddress && (
-          <TransferFunds userAddress={zkLoginUserAddress} suiValue={suiValue} onTransferComplete={handleTransferComplete} />
-        )}
       </div>
       <style jsx>{`
         .container {
@@ -106,7 +152,7 @@ const Withdrawal = () => {
           background-color: brown;
           background-size: cover;
           background-position: center;
-          height: 100vh;
+          height: 110vh;
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -147,7 +193,7 @@ const Withdrawal = () => {
           font-size: 30px;
           text-align: center;
         }
-        .suiInput {
+        .aptosInput {
           width: 205px;
           padding: 5px;
           font-size: 30px;
@@ -203,7 +249,7 @@ const Withdrawal = () => {
           color: white;
         }
       `}</style>
-    </>
+    </div>
   );
 }
 
