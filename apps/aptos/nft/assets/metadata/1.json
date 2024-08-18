@@ -1,0 +1,16 @@
+{
+    "description": "This is a car NFT in the Car Collection",
+    "image": "",
+    "name": "This is a car",
+    "external_url": "https://your-project-url.com/1",
+    "attributes": [
+      {
+        "trait_type": "Type",
+        "value": "Car"
+      },
+      {
+        "trait_type": "Rarity",
+        "value": "Unique"
+      }
+    ]
+  }

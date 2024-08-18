@@ -1,16 +1,24 @@
-// pages/shop.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { WalletSelector } from "../components/WalletSelector";
+import { ABI1 } from "../utils/abi1.js";
+
+// Ensure ABI1 is properly defined
+if (!ABI1 || !ABI1.address) {
+  console.error("ABI1 or ABI1.address is not properly defined. Please check your abi1.js file.");
+}
 
 const Shop = () => {
   const [cars, setCars] = useState([]);
   const [selectedCar, setSelectedCar] = useState(null);
   const [purchasedCars, setPurchasedCars] = useState([]);
-  const [userId, setUserId] = useState(1);  // Assuming user ID is 1 for this example
+  const [userId, setUserId] = useState(1);
   const [status, setStatus] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { connected, account, signAndSubmitTransaction } = useWallet();
 
   useEffect(() => {
     fetch('/api/getCars')
@@ -19,50 +27,80 @@ const Shop = () => {
         setCars(data);
         setSelectedCar(data.find(car => car.available));
       })
-      .catch(error => console.error('Error fetching car data:', error));
+      .catch(error => {
+        console.error('Error fetching car data:', error);
+        setStatus('Error loading cars. Please try again.');
+      });
 
     fetch(`/api/getUser?id=${userId}`)
       .then(response => response.json())
       .then(data => setPurchasedCars(data.purchasedCars))
-      .catch(error => console.error('Error fetching user data:', error));
+      .catch(error => {
+        console.error('Error fetching user data:', error);
+        setStatus('Error loading user data. Please try again.');
+      });
   }, [userId]);
 
-  const handlePurchase = async () => {
-    if (!selectedCar) {
-      alert('No car selected.');
+  const handlePurchase = useCallback(async () => {
+    if (!connected || !account) {
+      setStatus("Please connect your wallet first!");
       return;
     }
 
-    const response = await fetch('/api/updatePurchase', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ carId: selectedCar.id, userId }),
-    });
+    if (!selectedCar) {
+      setStatus('No car selected.');
+      return;
+    }
 
-    if (response.ok) {
+    if (!ABI1 || !ABI1.address) {
+      setStatus('Contract configuration error. Please contact support.');
+      return;
+    }
+
+    setIsLoading(true);
+    setStatus('Processing purchase...');
+
+    try {
+      // Update purchase in the backend
+      const response = await fetch('/api/updatePurchase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ carId: selectedCar.id, userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Purchase failed: ${await response.text()}`);
+      }
+
       const data = await response.json();
       setPurchasedCars(data.purchasedCars);
 
       // Deduct the car price from the user's balance
       await updateBalance(-selectedCar.price);
 
-
       // Mint NFT for the user
-      const userAddress = localStorage.getItem('zkLoginUserAddress');
-      if (userAddress) {
-        await MintNFT(userAddress, setStatus, setIsLoading);
-      } else {
-        console.error('No zkLogin user address found.');
-      }
+      const txnResponse = await signAndSubmitTransaction({
+        sender: account.address,
+        data: {
+          function: `${ABI1.address}::nft_collection::mint_nft`,
+          typeArguments: [],
+          functionArguments: [account.address],
+        },
+      });
+
+      console.log("NFT minting transaction submitted:", txnResponse);
+      setStatus("NFT minted successfully!");
 
       router.reload();  // Reload the page to update the car list
-    } else {
-      const result = await response.json();
-      alert(`Purchase failed: ${result.error}`);
+    } catch (error) {
+      console.error('Error during purchase:', error);
+      setStatus(`Error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [connected, account, signAndSubmitTransaction, selectedCar, userId]);
 
   const updateBalance = async (amount) => {
     try {
@@ -75,11 +113,11 @@ const Shop = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(`Failed to update balance: ${error.message}`);
+        throw new Error(`Failed to update balance: ${await response.text()}`);
       }
     } catch (error) {
       console.error('Error updating balance:', error);
+      setStatus(`Error updating balance: ${error.message}`);
     }
   };
 
@@ -91,118 +129,12 @@ const Shop = () => {
         <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Sedan+SC&display=swap" rel="stylesheet" />
       </Head>
       <style jsx>{`
-        .shop-container {
-          display: flex;
-          background-color: #daa520;
-          padding: 20px;
-          border-radius: 10px;
-          justify-content: center;
-          align-items: center;
-          font-family: 'Pixelify Sans', sans-serif;
-          height: 90vh;
-          position: relative;
-        }
-
-        .car-image-container {
-          width: 45%;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-around;
-          align-items: center;
-        }
-
-        .car-image {
-          width: 80%;
-          height: 200px;
-          object-fit: cover;
-          border-radius: 10px;
-        }
-
-        .purchase-button {
-          display: block;
-          width: 54%;
-          padding: 10px;
-          margin-top: 10px;
-          background-color: #2e8b57;
-          color: white;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-          font-size: 24px;
-          font-family: 'Pixelify Sans', sans-serif;
-        }
-
-        .purchase-button:hover {
-          background-color: #379B63;
-        }
-
-        .message {
-          background-color: white;
-          color: black;
-          padding: 10px;
-          border-radius: 15px;
-          margin-top: 60px;
-          text-align: center;
-          font-family: 'Pixelify Sans', sans-serif;
-          font-size: 30px;
-          height: 120px;
-          margin-right: 20px;
-        }
-
-        .car-list {
-          width: 30%;
-          background-color: brown;
-          padding: 24px;
-          height: 70%;
-          overflow-y: auto;
-          border-radius: 10px;
-          scrollbar-width: none;
-        }
-
-        .car-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          background-color: #ffffe0;
-          padding: 10px;
-          cursor: pointer;
-          font-size: 30px;
-          border-radius: 5px;
-          margin-bottom: 5px;
-        }
-
-        .car-item:nth-child(even) {
-          background-color: brown;
-          color: #ffffe0;
-        }
-
-        .car-item:hover {
-          background-color: #f0e68c; /* Light Khaki for hover effect */
-        }
-
-        .car-item:nth-child(even):hover {
-          background-color: #6C2819;
-        }
-
-        .car-item-name {
-          flex: 1;
-          text-align: left;
-          padding-right: 10px;
-        }
-
-        .car-item-price {
-          flex: 0 0 auto;
-          text-align: right;
-          white-space: nowrap;
-        }
-
-        .sold-out {
-          text-decoration: line-through;
-          cursor: not-allowed;
-          color: red;
-        }
+        /* ... (keep the existing styles) ... */
       `}</style>
       <div className="shop-container">
+        <div className="wallet-selector">
+          <WalletSelector />
+        </div>
         <div className="car-image-container">
           {selectedCar ? (
             <>
@@ -211,9 +143,17 @@ const Shop = () => {
                 alt={selectedCar.name}
                 className="car-image"
               />
-              <button className="purchase-button" onClick={handlePurchase}>Purchase</button>
+              <button 
+                className="purchase-button" 
+                onClick={handlePurchase}
+                disabled={isLoading || !connected}
+              >
+                {isLoading ? 'Processing...' : 'Purchase and Mint NFT'}
+              </button>
               <div className="message">
-                Make your favourite car in your collection...
+                {connected 
+                  ? 'Make your favourite car in your collection...' 
+                  : 'Please connect your wallet to purchase.'}
               </div>
             </>
           ) : (
@@ -237,7 +177,7 @@ const Shop = () => {
           ))}
         </div>
       </div>
-      {status && <p>{status}</p>}
+      {status && <p className="status-message">{status}</p>}
     </>
   );
 };
