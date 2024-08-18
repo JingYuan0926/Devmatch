@@ -4,16 +4,16 @@ pragma solidity ^0.8.0;
 contract WalletInformation {
     struct Wallet {
         string walletName;
-        address walletAddress;
-        uint256 inGameCurrency;
-        uint256 penTokenBalance;
+        string walletAddress; // Already string
+        string inGameCurrency; // Change from uint256 to string
+        string penTokenBalance; // Change from uint256 to string
     }
 
-    mapping(address => Wallet) private wallets;
-    address[] private walletAddresses;
+    mapping(string => Wallet) private wallets; // Mapping key type is already string
+    string[] private walletAddresses; // Array type is already string
 
     // Event to log when a new wallet is added
-    event WalletAdded(string walletName, address walletAddress, uint256 inGameCurrency, uint256 penTokenBalance);
+    event WalletAdded(string walletName, string walletAddress, string inGameCurrency, string penTokenBalance);
 
     // Function to clear all existing wallets
     function _clearWallets() internal {
@@ -26,9 +26,9 @@ contract WalletInformation {
     // Function to bulk upload wallets and replace existing ones
     function bulkUploadWallets(
         string[] memory _walletNames,
-        address[] memory _walletAddresses,
-        uint256[] memory _inGameCurrencies,
-        uint256[] memory _penTokenBalances
+        string[] memory _walletAddresses, // Already string[]
+        string[] memory _inGameCurrencies, // Change from uint256[] to string[]
+        string[] memory _penTokenBalances // Change from uint256[] to string[]
     ) public {
         require(
             _walletNames.length == _walletAddresses.length &&
@@ -44,9 +44,9 @@ contract WalletInformation {
         for (uint256 i = 0; i < _walletAddresses.length; i++) {
             Wallet memory newWallet = Wallet({
                 walletName: _walletNames[i],
-                walletAddress: _walletAddresses[i],
-                inGameCurrency: _inGameCurrencies[i],
-                penTokenBalance: _penTokenBalances[i]
+                walletAddress: _walletAddresses[i], // Already string
+                inGameCurrency: _inGameCurrencies[i], // Now string
+                penTokenBalance: _penTokenBalances[i] // Now string
             });
 
             wallets[_walletAddresses[i]] = newWallet;
