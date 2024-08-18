@@ -4,7 +4,7 @@ import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { useRouter } from 'next/router';
 import { WalletSelector } from "./WalletSelector";
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
-import { Bounty } from './Bounty';
+import  Bounty  from './Bounty';
 
 const APTOS_COIN = "0x1::aptos_coin::AptosCoin";
 const COIN_STORE = `0x1::coin::CoinStore<${APTOS_COIN}>`;
