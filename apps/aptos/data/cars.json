@@ -18,14 +18,14 @@
     "name": "Ferrari",
     "price": 1200,
     "imageUrl": "/ferrari.png",
-    "available": true
+    "available": false
   },
   {
     "id": 4,
     "name": "BMW",
     "price": 950,
     "imageUrl": "/bmw.png",
-    "available": true
+    "available": false
   },
   {
     "id": 5,
